@@ -13,6 +13,7 @@ class TestConverter(unittest.TestCase):
     """
     Test the converter features
     """
+
     @classmethod
     def setUp(cls):
         """
@@ -125,6 +126,34 @@ class TestConverter(unittest.TestCase):
 
         # /users (no auth required)
         self.assertFalse("Authorization" in endpoints[0]["input_headers"])
+
+    def test_header_parameter_on_endpoint(self):
+        """
+        Test if a specific endpoint contains the header from the parameters
+        """
+        converter = OpenAPIToKrakenD(logging_mode=logging.ERROR,
+                                     input_folder_path="tests/mock_data/headers/",
+                                     output_folder_path="tests/output",
+                                     name="Test gateway")
+        converter.convert()
+
+        with open("tests/output/config/templates/OPENAPI.tmpl", "r", encoding="utf-8") as template_file:
+            template = template_file.read()
+
+        # Remove templating
+        config_data = re.sub(r"^({{(.*?)}})", "", template, flags=re.M).strip()
+
+        # Split objects
+        endpoints_data = re.split(r"(?<=}),", config_data, flags=re.M)
+
+        endpoints = []
+
+        # Load JSON to array
+        for endpoint in endpoints_data:
+            endpoints.append(json.loads(endpoint))
+
+        # /users/{user_id} (user_id as header parameter)
+        self.assertTrue("user_id" in endpoints[2]["input_headers"])
 
     def test_no_version_define(self):
         """
