@@ -99,8 +99,7 @@ class TestConverter(unittest.TestCase):
         converter = OpenAPIToKrakenD(logging_mode=logging.ERROR,
                                      input_folder_path="tests/mock_data/full/",
                                      output_folder_path="tests/output",
-                                     name="Test gateway",
-                                     stackdriver_project_id="gateway-stackdriver")
+                                     name="Test gateway")
         converter.convert()
 
         with open("tests/output/config/templates/OPENAPI.tmpl", "r", encoding="utf-8") as template_file:
@@ -131,8 +130,7 @@ class TestConverter(unittest.TestCase):
         converter = OpenAPIToKrakenD(logging_mode=logging.ERROR,
                                      input_folder_path="tests/mock_data/full/",
                                      output_folder_path="tests/output",
-                                     name="Test gateway",
-                                     stackdriver_project_id="gateway-stackdriver")
+                                     name="Test gateway")
         converter.convert()
 
         with open("tests/output/config/templates/OPENAPI.tmpl", "r", encoding="utf-8") as template_file:
@@ -156,8 +154,7 @@ class TestConverter(unittest.TestCase):
         converter = OpenAPIToKrakenD(logging_mode=logging.ERROR,
                                      input_folder_path="tests/mock_data/version/",
                                      output_folder_path="tests/output",
-                                     name="Test gateway",
-                                     stackdriver_project_id="gateway-stackdriver")
+                                     name="Test gateway")
         converter.convert()
 
         with open("tests/output/config/templates/OPENAPI.V1.tmpl", "r", encoding="utf-8") as template_file:
@@ -173,3 +170,18 @@ class TestConverter(unittest.TestCase):
         path = endpoints_data[0]
 
         self.assertEqual(path, "/openapi/v1")
+
+    def test_service(self):
+        """
+        Test settings/service.json
+        """
+        converter = OpenAPIToKrakenD(logging_mode=logging.ERROR,
+                                     input_folder_path="tests/mock_data/full/",
+                                     output_folder_path="tests/output",
+                                     name="Test gateway")
+        converter.convert()
+
+        with open("tests/output/config/settings/service.json", "r", encoding="utf-8") as service_file:
+            service_json = json.load(service_file)
+
+        self.assertEqual(service_json["OPENAPI"], "https://f1-betting.app")
