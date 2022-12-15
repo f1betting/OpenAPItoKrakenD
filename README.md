@@ -69,7 +69,7 @@ $ pip install -r requirements.txt
 Run main.py to execute the converter:
 
 ```shell
-$ python main.py --help
+$ python -m app.main --help
 
 Usage: main.py [OPTIONS] INPUT_FOLDER OUTPUT_FOLDER
 
