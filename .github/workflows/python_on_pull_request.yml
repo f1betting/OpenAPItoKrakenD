@@ -1,0 +1,16 @@
+name: Python on Pull Request
+
+on: pull_request
+
+jobs:
+  testing:
+    uses: ./.github/workflows/action_python_testing.yml
+  linting:
+    uses: ./.github/workflows/action_python_linting.yml
+
+  sonar:
+    uses: ./.github/workflows/action_sonarcloud.yml
+    needs: [ testing, linting ]
+    secrets:
+      github: ${{ secrets.GITHUB_TOKEN }}
+      sonar: ${{ secrets.SONAR_TOKEN }}

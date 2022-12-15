@@ -1,0 +1,27 @@
+on:
+  workflow_call:
+    secrets:
+      github:
+        required: true
+      sonar:
+        required: true
+
+jobs:
+  sonarcloud:
+    name: SonarCloud
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+      - uses: actions/download-artifact@v3
+        with:
+          name: coverage-testing-report
+      - uses: actions/download-artifact@v3
+        with:
+          name: pylint-report
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.github }}  # Needed to get PR information, if any
+          SONAR_TOKEN: ${{ secrets.sonar }}
