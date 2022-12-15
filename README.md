@@ -114,6 +114,8 @@ OpenAPI name, this will create a version.
 
 ## 📜 License
 
+Distributed under the MIT License. See `LICENSE.md` for more information.
+
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 
