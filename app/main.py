@@ -5,7 +5,10 @@ import typer
 
 from app.logic.converter import OpenAPIToKrakenD
 
+app = typer.Typer()
 
+
+@app.command()
 def main(input_folder: str = typer.Argument(..., help="Input folder that contains all the OpenAPI specifications",
                                             show_default=False),
          output_folder: str = typer.Argument(..., help="Output folder", show_default=False),
