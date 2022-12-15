@@ -26,5 +26,5 @@ def main(input_folder: str = typer.Argument(..., help="Input folder that contain
     converter.convert()
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no coverage
     typer.run(main)
