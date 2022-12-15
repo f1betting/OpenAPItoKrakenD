@@ -8,8 +8,14 @@ from http.client import HTTPException
 
 
 class OpenAPIToKrakenD:
+    """
+    Batch-convert OpenApi 3 files to a flexible KrakenD configuration
+    """
     def __init__(self, logging_mode: int, input_folder_path: str, output_folder_path: str, name: str,
                  stackdriver_project_id: str = None):
+        """
+        Initialize converter
+        """
         logging.basicConfig(level=logging_mode, format="[%(levelname)s]: %(message)s")
 
         self.paths = glob.glob(f"{input_folder_path}/*.json")
@@ -23,6 +29,9 @@ class OpenAPIToKrakenD:
         self.name = name
 
     def convert(self) -> OpenAPIToKrakenD:
+        """
+        Convert the OpenAPI files to a flexible KrakenD configuration
+        """
         for path in self.paths:
             self.files.append(os.path.basename(path))
 
@@ -62,21 +71,11 @@ class OpenAPIToKrakenD:
 
         return self
 
-    def __verify_openapi(self, file):
-        with open(f"{self.input_folder_path}/{file}", "r", encoding="utf-8") as openapi_file:
-            try:
-                logging.debug("Verifying server")
-                data = json.load(openapi_file)["servers"][0]["url"]
-
-                if "http://" not in data and "https://" not in data:
-                    logging.error(f"{file}: invalid server")
-                    raise HTTPException
-            except KeyError:
-                logging.error(f"{file}: no servers defined")
-                raise KeyError
-
     @staticmethod
     def __new_endpoint(endpoint: str, method: str, headers: list):
+        """
+        Create a KrakenD endpoint
+        """
         logging.debug("Creating headers")
         headers.append("Content-Type")
 
@@ -105,6 +104,9 @@ class OpenAPIToKrakenD:
 
     @staticmethod
     def __get_security_headers(security_scheme):
+        """
+        Get the correct security headers for the security scheme
+        """
         header = None
 
         if security_scheme["type"] == "http" \
@@ -117,7 +119,26 @@ class OpenAPIToKrakenD:
 
         return header
 
+    def __verify_openapi(self, file):
+        """
+        Verify if the OpenAPI files contain all the required fields
+        """
+        with open(f"{self.input_folder_path}/{file}", "r", encoding="utf-8") as openapi_file:
+            try:
+                logging.debug("Verifying server")
+                data = json.load(openapi_file)["servers"][0]["url"]
+
+                if "http://" not in data and "https://" not in data:
+                    logging.error(f"{file}: invalid server")
+                    raise HTTPException
+            except KeyError:
+                logging.error(f"{file}: no servers defined")
+                raise KeyError
+
     def __write_dockerfile(self):
+        """
+        Write the dockerfile
+        """
         data = """FROM devopsfaith/krakend:2.1.2
 
 COPY . /etc/krakend/
@@ -136,6 +157,9 @@ ENTRYPOINT FC_ENABLE=1 \\
             dockerfile.write(data)
 
     def __write_endpoints_template(self):
+        """
+        Write the endpoints files
+        """
         service = "{{$service := .}}\n\n"
         define = "{{define \"Endpoints\"}}\n\n"
         end = "\n\n{{end}}"
@@ -174,6 +198,9 @@ ENTRYPOINT FC_ENABLE=1 \\
             endpoints_file.write(file_data)
 
     def __write_service(self):
+        """
+        Write service.json
+        """
         service_array = {}
 
         for filename in self.files:
@@ -189,6 +216,9 @@ ENTRYPOINT FC_ENABLE=1 \\
             json.dump(service_array, file, indent=4)
 
     def __write_krakend_json(self):
+        """
+        Write the KrakenD configuration
+        """
         logging.info("Generating config")
         krakend_config = {
             "version": 3,
@@ -280,6 +310,9 @@ ENTRYPOINT FC_ENABLE=1 \\
             logging.info("Finished writing file")
 
     def __format_endpoints(self, file_input, file_output):
+        """
+        Convert all the endpoints to the KrakenD format
+        """
         logging.info(f"Formatting endpoints for {file_input}")
 
         endpoints_list = []
@@ -346,6 +379,9 @@ ENTRYPOINT FC_ENABLE=1 \\
             file.write(file_data)
 
     def __get_headers(self, endpoint, security_schemes):
+        """
+        Get the headers for the endpoint
+        """
         headers = []
         try:
             if endpoint["security"] is not None:
@@ -368,6 +404,9 @@ ENTRYPOINT FC_ENABLE=1 \\
         return headers
 
     def __add_security_headers(self, endpoint, security_schemes):
+        """
+        Add the security headers
+        """
         headers = []
         security = endpoint["security"]
         schemes = list(security_schemes.keys())
@@ -382,6 +421,9 @@ ENTRYPOINT FC_ENABLE=1 \\
         return headers
 
     def __create_folders(self):
+        """
+        Create the configuration folders
+        """
         paths = ["config", "config/settings", "config/templates"]
 
         for folder in paths:

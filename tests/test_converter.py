@@ -10,6 +10,9 @@ from app.logic.converter import OpenAPIToKrakenD
 
 
 class TestConverter(unittest.TestCase):
+    """
+    Test the converter features
+    """
     @classmethod
     def setUp(cls):
         """

@@ -12,6 +12,9 @@ def main(input_folder: str = typer.Argument(..., help="Input folder that contain
          name: str = typer.Option("KrakenD API Gateway", help="API gateway name"),
          stackdriver_project_id: Optional[str] = typer.Option(None, help="Google Cloud project id"),
          debug: Optional[bool] = typer.Option(False, help="Enable debug mode")):
+    """
+    The converter CLI command
+    """
     converter = OpenAPIToKrakenD(logging_mode=logging.DEBUG if debug else logging.INFO,
                                  input_folder_path=input_folder,
                                  output_folder_path=output_folder,
