@@ -23,7 +23,6 @@ class OpenAPIToKrakenD:
         self.input_folder_path = input_folder_path
         self.output_folder_path = output_folder_path
 
-        self.enable_stackdriver = bool(stackdriver_project_id)
         self.stackdriver_project_id = stackdriver_project_id
 
         self.name = name
@@ -269,7 +268,7 @@ ENTRYPOINT FC_ENABLE=1 \\
             "endpoints": '[{{template "Endpoints".service}}]'
         }
 
-        if self.enable_stackdriver:
+        if self.stackdriver_project_id:
             logging.debug("Adding stackdriver configuration")
             krakend_config["extra_config"]["telemetry/opencensus"] = \
                 {
