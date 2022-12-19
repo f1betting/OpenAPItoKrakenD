@@ -17,7 +17,7 @@ class OpenAPIToKrakenD:
         """
         Initialize converter
         """
-        logging.basicConfig(level=logging_mode, format="[%(levelname)s]: %(message)s")
+        logging.basicConfig(level=logging_mode, format="[%(levelname)s]: %(message)s")  # NOSONAR
 
         self.paths: list = glob.glob(f"{input_folder_path}/*.json")
         self.files: list = []
@@ -132,7 +132,7 @@ class OpenAPIToKrakenD:
             server = data["servers"][0]["url"]
 
             if "servers" in data.keys() and len(data["servers"]) >= 1 and "url" in data["servers"][0]:
-                if "http://" not in server and "https://" not in server:
+                if "http://" not in server and "https://" not in server:  # NOSONAR
                     logging.error(f"{file}: invalid server")
                     raise ValueError
             else:
