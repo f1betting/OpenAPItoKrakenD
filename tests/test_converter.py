@@ -2,6 +2,7 @@ import json
 import logging
 import os
 import re
+import shutil
 import unittest
 
 from app.logic.converter import OpenAPIToKrakenD
@@ -20,13 +21,13 @@ class TestConverter(unittest.TestCase):
         if not os.path.exists(os.path.join("tests/output")):
             os.mkdir(os.path.join("tests/output"))
 
-    # @classmethod
-    # def tearDown(cls):
-    #     """
-    #     Delete the output folder if it exists
-    #     """
-    #     if os.path.exists(os.path.join("tests/output")):
-    #         shutil.rmtree(os.path.join("tests/output"))
+    @classmethod
+    def tearDown(cls):
+        """
+        Delete the output folder if it exists
+        """
+        if os.path.exists(os.path.join("tests/output")):
+            shutil.rmtree(os.path.join("tests/output"))
 
     def test_name(self):
         """
