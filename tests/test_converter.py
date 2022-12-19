@@ -2,7 +2,6 @@ import json
 import logging
 import os
 import re
-import shutil
 import unittest
 
 from app.logic.converter import OpenAPIToKrakenD
@@ -21,13 +20,13 @@ class TestConverter(unittest.TestCase):
         if not os.path.exists(os.path.join("tests/output")):
             os.mkdir(os.path.join("tests/output"))
 
-    @classmethod
-    def tearDown(cls):
-        """
-        Delete the output folder if it exists
-        """
-        if os.path.exists(os.path.join("tests/output")):
-            shutil.rmtree(os.path.join("tests/output"))
+    # @classmethod
+    # def tearDown(cls):
+    #     """
+    #     Delete the output folder if it exists
+    #     """
+    #     if os.path.exists(os.path.join("tests/output")):
+    #         shutil.rmtree(os.path.join("tests/output"))
 
     def test_name(self):
         """
@@ -202,6 +201,58 @@ class TestConverter(unittest.TestCase):
         path = endpoints_data[0]
 
         self.assertEqual(path, "/openapi/v1")
+
+    def test_auto_versioning_conflict_v1(self):
+        """
+        Test the path if there is version V1 defined
+        (no_versioning set to True, meaning it should pick V1 from the OpenAPI spec filename)
+        """
+        converter = OpenAPIToKrakenD(logging_mode=logging.ERROR,
+                                     input_folder_path="tests/mock_data/version_conflict/",
+                                     output_folder_path="tests/output",
+                                     name="Test gateway",
+                                     no_versioning=True)
+        converter.convert()
+
+        with open("tests/output/config/templates/OPENAPI.V1.tmpl", "r", encoding="utf-8") as template_file:
+            template = template_file.read()
+
+        # Separate path templating
+        config_data = re.findall(r"^({{\$prefix := (.*?)}})", template, flags=re.M)
+
+        # Find path value
+        endpoints_data = re.findall(r"\"(.*?)\"", str(config_data[0]))
+
+        # Assign path value
+        path = endpoints_data[0]
+
+        self.assertEqual(path, "/openapi/v1")
+
+    def test_auto_versioning_conflict_v2(self):
+        """
+        Test the path if there is version V2 defined
+        (no_versioning set to False, meaning it should pick V2 from the OpenAPI spec itself)
+        """
+        converter = OpenAPIToKrakenD(logging_mode=logging.ERROR,
+                                     input_folder_path="tests/mock_data/version_conflict/",
+                                     output_folder_path="tests/output",
+                                     name="Test gateway",
+                                     no_versioning=False)
+        converter.convert()
+
+        with open("tests/output/config/templates/OPENAPI.V1.tmpl", "r", encoding="utf-8") as template_file:
+            template = template_file.read()
+
+        # Separate path templating
+        config_data = re.findall(r"^({{\$prefix := (.*?)}})", template, flags=re.M)
+
+        # Find path value
+        endpoints_data = re.findall(r"\"(.*?)\"", str(config_data[0]))
+
+        # Assign path value
+        path = endpoints_data[0]
+
+        self.assertEqual(path, "/openapi/v2")
 
     def test_v1_version_define(self):
         """
