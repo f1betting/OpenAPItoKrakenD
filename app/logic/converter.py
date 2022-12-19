@@ -28,7 +28,7 @@ class OpenAPIToKrakenD:
 
         self.name: str = name
 
-        self.versioning: bool = False if no_versioning else True
+        self.versioning: bool = not no_versioning
 
     def convert(self) -> OpenAPIToKrakenD:
         """
