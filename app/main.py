@@ -14,7 +14,15 @@ def main(input_folder: str = typer.Argument(..., help="Input folder that contain
          output_folder: str = typer.Argument(..., help="Output folder", show_default=False),
          name: str = typer.Option("KrakenD API Gateway", help="API gateway name"),
          stackdriver_project_id: Optional[str] = typer.Option(None, help="Google Cloud project id"),
-         debug: Optional[bool] = typer.Option(False, help="Enable debug mode")):
+         debug: Optional[bool] = typer.Option(False, "--debug", help="Enable debug mode"),
+         disable_automatic_versioning: Optional[bool] = typer.Option(False,
+                                                                     "--disable-automatic-versioning",
+                                                                     help="Disable versioning based on 'version' "
+                                                                          "field in OpenAPI specification and use "
+                                                                          "filename based-versioning instead. (If "
+                                                                          "disabled and no filename versioning is "
+                                                                          "done, the API will not get a version in "
+                                                                          "the endpoint)")):
     """
     The converter CLI command
     """
@@ -22,7 +30,8 @@ def main(input_folder: str = typer.Argument(..., help="Input folder that contain
                                  input_folder_path=input_folder,
                                  output_folder_path=output_folder,
                                  name=name,
-                                 stackdriver_project_id=stackdriver_project_id)
+                                 stackdriver_project_id=stackdriver_project_id,
+                                 no_versioning=disable_automatic_versioning)
     converter.convert()
 
 

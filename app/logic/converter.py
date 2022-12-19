@@ -4,28 +4,31 @@ import glob
 import json
 import logging
 import os
-from http.client import HTTPException
+import re
 
 
 class OpenAPIToKrakenD:
     """
     Batch-convert OpenApi 3 files to a flexible KrakenD configuration
     """
+
     def __init__(self, logging_mode: int, input_folder_path: str, output_folder_path: str, name: str,
-                 stackdriver_project_id: str = None):
+                 stackdriver_project_id: str = None, no_versioning: bool = False):
         """
         Initialize converter
         """
         logging.basicConfig(level=logging_mode, format="[%(levelname)s]: %(message)s")
 
-        self.paths = glob.glob(f"{input_folder_path}/*.json")
-        self.files = []
-        self.input_folder_path = input_folder_path
-        self.output_folder_path = output_folder_path
+        self.paths: list = glob.glob(f"{input_folder_path}/*.json")
+        self.files: list = []
+        self.input_folder_path: str = input_folder_path
+        self.output_folder_path: str = output_folder_path
 
-        self.stackdriver_project_id = stackdriver_project_id
+        self.stackdriver_project_id: str = stackdriver_project_id
 
-        self.name = name
+        self.name: str = name
+
+        self.versioning: bool = False if no_versioning else True
 
     def convert(self) -> OpenAPIToKrakenD:
         """
@@ -123,16 +126,24 @@ class OpenAPIToKrakenD:
         Verify if the OpenAPI files contain all the required fields
         """
         with open(f"{self.input_folder_path}/{file}", "r", encoding="utf-8") as openapi_file:
-            try:
-                logging.debug("Verifying server")
-                data = json.load(openapi_file)["servers"][0]["url"]
+            data: dict = json.load(openapi_file)
 
-                if "http://" not in data and "https://" not in data:
+            logging.debug("Verifying server")
+            server = data["servers"][0]["url"]
+
+            if "servers" in data.keys() and len(data["servers"]) >= 1 and "url" in data["servers"][0]:
+                if "http://" not in server and "https://" not in server:
                     logging.error(f"{file}: invalid server")
-                    raise HTTPException
-            except KeyError:
+                    raise ValueError
+            else:
                 logging.error(f"{file}: no servers defined")
-                raise KeyError
+                raise ValueError
+
+            logging.debug("Verifying version")
+
+            if "info" not in data.keys() or "version" not in data["info"].keys():
+                logging.error("No version found")
+                raise ValueError
 
     def __write_dockerfile(self):
         """
@@ -175,6 +186,7 @@ ENTRYPOINT FC_ENABLE=1 \\
 
                 name = file[:-5].upper().replace(".V", "V")
 
+                # https://docs.python.org/3/library/string.html#format-string-syntax
                 data = f'{{{{ template "{name}" $service.{name}}}}}\n'
 
                 logging.debug(f"Writing service {file[:-5].upper()}")
@@ -204,10 +216,26 @@ ENTRYPOINT FC_ENABLE=1 \\
 
         for filename in self.files:
             with open(f"{self.input_folder_path}/{filename}", "r", encoding="utf-8") as file:
-                data = json.load(file)["servers"][0]["url"]
+                data = json.load(file)
 
-                service_name = filename.upper().replace(".V", "V")[:-5]
-                service = {service_name: data}
+                file_name = filename.upper()[:-5]
+
+                if ".V" in file_name and not self.versioning:
+                    service_name = file_name.replace(".V", "V")
+
+                elif ".V" in file_name and self.versioning:
+                    version = "V" + data["info"]["version"][0:1]
+                    api_name = re.sub(r"\.V\d", "", file_name)
+
+                    service_name = api_name + version
+
+                elif self.versioning:
+                    service_name = file_name + "V" + data["info"]["version"][0:1]
+
+                else:
+                    service_name = file_name
+
+                service = {service_name: data["servers"][0]["url"]}
 
                 service_array.update(service)
 
@@ -316,11 +344,6 @@ ENTRYPOINT FC_ENABLE=1 \\
 
         endpoints_list = []
 
-        api_prefix = file_output.replace(".V", "/V").lower()
-        api_define = file_output.replace(".V", "V")
-
-        define = f'{{{{define "{api_define}"}}}}\n\n'
-        prefix = f'{{{{$prefix := "/{api_prefix}"}}}}\n\n'
         host = "{{$host := .}}\n"
         end = "\n\n\n{{end}}"
 
@@ -330,6 +353,29 @@ ENTRYPOINT FC_ENABLE=1 \\
             logging.debug(f"Loaded {file_input}")
             data = json.load(openapi_file)
 
+            if ".V" in file_output and not self.versioning:
+                api_prefix = file_output.replace(".V", "/V").lower()
+                api_define = file_output.replace(".V", "V")
+
+            elif ".V" in file_output and self.versioning:
+                version = "V" + data["info"]["version"][0:1]
+                api_name = re.sub(r"\.V\d", "", file_output)
+
+                api_prefix = (api_name + "/" + version).lower()
+                api_define = api_name + version
+
+            elif self.versioning:
+                api_prefix = str(file_output + "/V" + data["info"]["version"][0:1]).lower()
+                api_define = file_output + "V" + data["info"]["version"][0:1]
+
+            else:
+                api_prefix = file_output.lower()
+                api_define = file_output
+
+            # https://docs.python.org/3/library/string.html#format-string-syntax
+            define = f'{{{{define "{api_define}"}}}}\n\n'
+            prefix = f'{{{{$prefix := "/{api_prefix}"}}}}\n\n'
+
             for path in data["paths"]:
                 logging.info(f"Starting conversion for {path}")
 
@@ -337,10 +383,10 @@ ENTRYPOINT FC_ENABLE=1 \\
                     logging.info(f"Preparing conversion for {path}: {method}")
 
                     security_schemes = None
-                    try:
+                    if "components" in data and "securitySchemes" in data["components"]:
                         security_schemes = data["components"]["securitySchemes"]
                         logging.debug("Security schemes found")
-                    except KeyError:
+                    else:
                         logging.debug("No security schemes found")
 
                     headers = self.__get_headers(data["paths"][path][method], security_schemes)
@@ -382,22 +428,21 @@ ENTRYPOINT FC_ENABLE=1 \\
         Get the headers for the endpoint
         """
         headers = []
-        try:
-            if endpoint["security"] is not None:
-                logging.debug("Adding security headers")
-                headers = self.__add_security_headers(endpoint, security_schemes)
-                logging.debug("Added security headers")
-        except KeyError:
+
+        if "security" in endpoint and endpoint["security"] is not None:
+            logging.debug("Adding security headers")
+            headers = self.__add_security_headers(endpoint, security_schemes)
+            logging.debug("Added security headers")
+        else:
             logging.debug("No authorization header required")
 
-        try:
-            if endpoint["parameters"] is not None:
-                for parameter in endpoint["parameters"]:
-                    if parameter["in"] == "header":
-                        logging.debug(f'Adding {parameter["name"]} to headers')
-                        headers.append(parameter["name"])
-                        logging.debug(f'Added {parameter["name"]} to headers')
-        except KeyError:
+        if "parameters" in endpoint and endpoint["parameters"] is not None:
+            for parameter in endpoint["parameters"]:
+                if parameter["in"] == "header":
+                    logging.debug(f'Adding {parameter["name"]} to headers')
+                    headers.append(parameter["name"])
+                    logging.debug(f'Added {parameter["name"]} to headers')
+        else:
             logging.debug("No parameters found")
 
         return headers
