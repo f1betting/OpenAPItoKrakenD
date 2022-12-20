@@ -32,6 +32,7 @@ runs:
       shell: bash
       run: |
         cd ${{ github.action_path }}
+        mkdir output
         python -m app.main $INPUT_INPUT output
 
     - name: Upload output as artifact
