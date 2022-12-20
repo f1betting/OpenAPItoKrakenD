@@ -37,13 +37,13 @@ runs:
         mkdir -p output
         export PYTHONPATH=${{ github.action_path }}
         
-        echo "python -m app.main ${{inputs.input}} output \
-          $(if [ -n "${{inputs.name}}" ]; then echo " --name $(sed ${{inputs.name}}// /_/)"; fi) \
+        echo "python -m app.main ${{inputs.input}} output \ 
+          $(if [ -n "${{inputs.name}}" ]; then echo " --name $(sed "${{inputs.name}}// /_/")"; fi) \
           $(if [ -n "${{inputs.stackdriver-project-id}}" ]; then echo " --stackdriver-project-id \"${{inputs.stackdriver-project-id}}\""; fi) \
           $(if [ -n "${{inputs.disable-versioning}}" ]; then echo " --disable-automatic-versioning"; fi)"
         
         python -m app.main ${{inputs.input}} output \
-          $(if [ -n "${{inputs.name}}" ]; then echo " --name $(sed ${{inputs.name}}// /_/)"; fi) \
+          $(if [ -n "${{inputs.name}}" ]; then echo " --name $(sed "${{inputs.name}}// /_/")"; fi) \
           $(if [ -n "${{inputs.stackdriver-project-id}}" ]; then echo " --stackdriver-project-id \"${{inputs.stackdriver-project-id}}\""; fi) \
           $(if [ -n "${{inputs.disable-versioning}}" ]; then echo " --disable-automatic-versioning"; fi)
 
