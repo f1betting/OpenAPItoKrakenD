@@ -37,15 +37,15 @@ runs:
         mkdir -p output
         export PYTHONPATH=${{ github.action_path }}
         
-        echo "python -m app.main $input output \
-          $(if [ -n "$name" ]; then echo " --name ${name// /_}"; fi) \
-          $(if [ -n "$stackdriver" ]; then echo " --stackdriver-project-id \"$stackdriver\""; fi) \
-          $(if [ -n "$versioning" ]; then echo " --disable-automatic-versioning"; fi)"
+        echo "python -m app.main ${{inputs.input}} output \
+          $(if [ -n "${{inputs.name}}" ]; then echo " --name ${${{inputs.name}}// /_}"; fi) \
+          $(if [ -n "${{inputs.stackdriver-project-id}}" ]; then echo " --stackdriver-project-id \"${{inputs.stackdriver-project-id}}\""; fi) \
+          $(if [ -n "${{inputs.disable-versioning}}" ]; then echo " --disable-automatic-versioning"; fi)"
         
-        python -m app.main $input output \
-          $(if [ -n "$name" ]; then echo " --name ${name// /_}"; fi) \
-          $(if [ -n "$stackdriver" ]; then echo " --stackdriver-project-id \"$stackdriver\""; fi) \
-          $(if [ -n "$versioning" ]; then echo " --disable-automatic-versioning"; fi)
+        python -m app.main ${{inputs.input}} output \
+          $(if [ -n "${{inputs.name}}" ]; then echo " --name ${${{inputs.name}}// /_}"; fi) \
+          $(if [ -n "${{inputs.stackdriver-project-id}}" ]; then echo " --stackdriver-project-id \"${{inputs.stackdriver-project-id}}\""; fi) \
+          $(if [ -n "${{inputs.disable-versioning}}" ]; then echo " --disable-automatic-versioning"; fi)
 
     - name: Upload output as artifact
       uses: actions/upload-artifact@v3
