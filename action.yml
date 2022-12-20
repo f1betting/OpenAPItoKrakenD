@@ -42,5 +42,5 @@ runs:
       uses: actions/upload-artifact@v3
       with:
         name: krakend-config
-        path: output/
+        path: ./output/
         retention-days: 14
