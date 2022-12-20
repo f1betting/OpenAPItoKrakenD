@@ -31,8 +31,8 @@ runs:
     - name: Convert OpenAPI spec to KrakenD
       shell: bash
       run: |
-        cd ${{ github.action_path }}
         mkdir -p output
+        export PYTHONPATH=${{ github.action_path }}
         python -m app.main ${{inputs.input}} output
         echo ${{inputs.input}}
         ls -al
@@ -42,5 +42,5 @@ runs:
       uses: actions/upload-artifact@v3
       with:
         name: krakend-config
-        path: ${{ github.action_path }}/output/
+        path: ./output/
         retention-days: 14
