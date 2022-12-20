@@ -37,9 +37,9 @@ runs:
         mkdir -p output
         export PYTHONPATH=${{ github.action_path }}
         python -m app.main ${{inputs.input}} output \
-          $(if [ -n ${{inputs.name}} ]; then "--name ${{inputs.name}}"; fi) \
-          $(if [ -n ${{inputs.stackdriver-project-id}} ]; then "--stackdriver-project-id ${{inputs.stackdriver-project-id}}"; fi) \
-          $(if [ -n ${{inputs.disable-automatic-versioning}} ]; then "--disable-automatic-versioning"; fi)
+          $(if [ -z ${{inputs.name}} ]; then "--name ${{inputs.name}}"; fi) \
+          $(if [ -z ${{inputs.stackdriver-project-id}} ]; then "--stackdriver-project-id ${{inputs.stackdriver-project-id}}"; fi) \
+          $(if [ -z ${{inputs.disable-automatic-versioning}} ]; then "--disable-automatic-versioning"; fi)
 
     - name: Upload output as artifact
       uses: actions/upload-artifact@v3
