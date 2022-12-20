@@ -28,7 +28,7 @@ runs:
         python -m pip install --upgrade pip
         ls -al
         pwd
-        pip install -r ./requirements.txt
+        pip install -r ${{ github.action_path }}/requirements.txt
 
     - name: Convert OpenAPI spec to KrakenD
       shell: bash
