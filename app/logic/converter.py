@@ -121,6 +121,24 @@ class OpenAPIToKrakenD:
 
         return header
 
+    def __get_name_with_version(self, filename, data):
+        name = filename.upper()[:-5]
+
+        if ".V" in name and not self.versioning:
+            return name.replace(".V", "V")
+
+        elif ".V" in name and self.versioning:
+            version = "V" + data["info"]["version"][0:1]
+            api_name = re.sub(r"\.V\d", "", name)
+
+            return api_name + version
+
+        elif self.versioning:
+            return name + "V" + data["info"]["version"][0:1]
+
+        else:
+            return name
+
     def __verify_openapi(self, file):
         """
         Verify if the OpenAPI files contain all the required fields
@@ -184,7 +202,10 @@ ENTRYPOINT FC_ENABLE=1 \\
             for file in self.files:
                 logging.debug(f"Loaded {file}")
 
-                name = file[:-5].upper().replace(".V", "V")
+                with open(f"{self.input_folder_path}/{file}", "r", encoding="utf-8") as json_file:
+                    data = json.load(json_file)
+
+                name = self.__get_name_with_version(file, data)
 
                 # https://docs.python.org/3/library/string.html#format-string-syntax
                 data = f'{{{{ template "{name}" $service.{name}}}}}\n'
@@ -218,26 +239,10 @@ ENTRYPOINT FC_ENABLE=1 \\
             with open(f"{self.input_folder_path}/{filename}", "r", encoding="utf-8") as file:
                 data = json.load(file)
 
-                file_name = filename.upper()[:-5]
+            service_name = self.__get_name_with_version(filename, data)
+            service = {service_name: data["servers"][0]["url"]}
 
-                if ".V" in file_name and not self.versioning:
-                    service_name = file_name.replace(".V", "V")
-
-                elif ".V" in file_name and self.versioning:
-                    version = "V" + data["info"]["version"][0:1]
-                    api_name = re.sub(r"\.V\d", "", file_name)
-
-                    service_name = api_name + version
-
-                elif self.versioning:
-                    service_name = file_name + "V" + data["info"]["version"][0:1]
-
-                else:
-                    service_name = file_name
-
-                service = {service_name: data["servers"][0]["url"]}
-
-                service_array.update(service)
+            service_array.update(service)
 
         with open(f"{self.output_folder_path}/config/settings/service.json", "w+", encoding="utf-8") as file:
             json.dump(service_array, file, indent=4)
