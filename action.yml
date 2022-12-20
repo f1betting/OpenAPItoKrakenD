@@ -34,6 +34,9 @@ runs:
         cd ${{ github.action_path }}
         mkdir -p output
         python -m app.main ${{inputs.input}} output
+        echo ${{inputs.input}}
+        ls -al
+        ls -al output/
 
     - name: Upload output as artifact
       uses: actions/upload-artifact@v3
