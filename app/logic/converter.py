@@ -169,7 +169,7 @@ class OpenAPIToKrakenD:
         """
         data = """FROM devopsfaith/krakend:2.1.2
 
-COPY . /etc/krakend/
+COPY /config /etc/krakend/config
 
 RUN FC_ENABLE=1 \\
     FC_SETTINGS="config/settings" \\

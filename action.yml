@@ -5,7 +5,7 @@ description: Run the mockserver for F1Betting
 inputs:
   input:
     required: true
-    description: The input folder for the OpenAPI specs
+    description: The input folder that contains the OpenAPI specs
   name:
     required: false
     description: The KrakenD API gateway name

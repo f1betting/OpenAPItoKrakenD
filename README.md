@@ -35,6 +35,9 @@
         - [🤖 Automatic versioning](#-automatic-versioning)
         - [👷 Manual versioning](#-manual-versioning)
         - [🚫 No versioning](#-no-versioning)
+    - [🎬 Using in GitHub Actions](#-using-in-github-actions)
+        - [📝 Configuration](#-configuration)
+        - [💾 Detailed example](#-detailed-example)
 - [📜 License](#-license)
 
 <!-- ABOUT THE PROJECT -->
@@ -126,6 +129,51 @@ Example:
 If you do not wish to use versioning, you can just name your file as normal and run the converter with
 the ``--disable-automatic-versioning`` flag. Do note that if you add ``.v`` to the
 OpenAPI name, it will create a version.
+
+### 🎬 Using in GitHub Actions
+
+It's possible to use this in a GitHub action to automatically generate the configuration with provided specifications.
+Running this action will create an artifact named ``krakend-config``. To use this artifact in other jobs, you
+can use ``actions/download-artifact@v2`` to download the action. This can be handy if you wish to automatically deploy
+it to a cloud service, like Google Cloud Run.
+
+The converter will automatically create a full Docker-ready configuration. All you have to do is build the Docker image
+and run it.
+
+Below is a basic example of how to use the converter
+
+````yaml
+name: Convert Specs to KrakenD config
+
+on: workflow_dispatch
+
+jobs:
+  convert:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Convert specs to KrakenD config
+        uses: f1betting/OpenAPItoKrakenD@main
+        with:
+          input: specs
+          name: "krakend_test_gateway"
+          stackdriver-project-id: google-project-id
+````
+
+#### 📝 Configuration
+
+There are a few configurations options possible. These are the ones that are available to use:
+
+| Name                   | Required | Description                                                    |
+|------------------------|----------|----------------------------------------------------------------|
+| input                  | Yes      | The input folder that contains the OpenAPI specs               |
+| name                   | No       | The KrakenD API gateway name (no spaces allowed)               |
+| stackdriver-project-id | No       | The Google project-id where Stackdriver logging is enabled for |
+| disable-versioning     | No       | Disable automatic versioning based on OpenAPI specifications   |
+
+#### 💾 Detailed example
+
+For a more detailed example, which automatically deploys the KrakenD gateway to Google Cloud Run,
+see [automatic cloud run deployment](examples/automatic_cloud_run_deployment/README.md).
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
