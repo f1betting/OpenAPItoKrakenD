@@ -32,8 +32,8 @@ runs:
       shell: bash
       run: |
         cd ${{ github.action_path }}
-        mkdir output
-        python -m app.main $INPUT_INPUT output
+        mkdir -p output
+        python -m app.main ${{inputs.input}} output
 
     - name: Upload output as artifact
       uses: actions/upload-artifact@v3
