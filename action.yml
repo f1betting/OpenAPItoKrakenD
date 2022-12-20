@@ -26,14 +26,12 @@ runs:
       shell: bash
       run: |
         python -m pip install --upgrade pip
-        ls -al
-        pwd
         pip install -r ${{ github.action_path }}/requirements.txt
 
     - name: Convert OpenAPI spec to KrakenD
       shell: bash
       run: |
-        python -m app.main $INPUT_INPUT output
+        python -m ${{ github.action_path }}/app.main $INPUT_INPUT output
 
     - name: Upload output as artifact
       uses: actions/upload-artifact@v3
