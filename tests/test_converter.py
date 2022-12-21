@@ -8,6 +8,8 @@ from app.logic.converter import OpenAPIToKrakenD
 from tests.logic.test_setup_logic import delete_output_folder, create_output_folder
 
 
+# pylint:disable=duplicate-code
+
 class TestConverter(unittest.TestCase):
     """
     Test the converter features

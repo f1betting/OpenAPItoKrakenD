@@ -1,6 +1,4 @@
 import json
-import os
-import shutil
 import unittest
 
 from typer.testing import CliRunner
@@ -8,6 +6,8 @@ from typer.testing import CliRunner
 from app.main import app
 from tests.logic.test_setup_logic import create_output_folder, delete_output_folder
 
+
+# pylint:disable=duplicate-code
 
 class TestCLI(unittest.TestCase):
     """

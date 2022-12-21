@@ -3,6 +3,6 @@ exit-zero = true
 disable=
     C0114, # missing-module-docstring
     W1203, # logging-fstring-interpolation
-
+    W0221  # arguments-differ
 [FORMAT]
 max-line-length=120

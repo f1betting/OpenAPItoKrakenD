@@ -12,6 +12,7 @@ class OpenAPIToKrakenD:
     Batch-convert OpenApi 3 files to a flexible KrakenD configuration
     """
 
+    # pylint: disable=too-many-arguments
     def __init__(self, logging_mode: int, input_folder_path: str, output_folder_path: str, name: str,
                  stackdriver_project_id: str = None, no_versioning: bool = False):
         """
