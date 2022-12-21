@@ -1,17 +1,5 @@
 {
   "openapi": "3.0.2",
-  "info": {
-    "title": "F1 BETTING",
-    "description": "An API to do bets with your friends about F1 race results!",
-    "license": {
-      "name": "MIT",
-      "url": "https://github.com/niek-o/F1Betting/blob/main/LICENSE.md"
-    },
-    "version": "1.4.1",
-    "x-logo": {
-      "url": "https://upload.wikimedia.org/wikipedia/commons/f/f2/New_era_F1_logo.png"
-    }
-  },
   "servers": [
     {
       "url": "https://f1-betting.app"
@@ -841,10 +829,9 @@
       }
     },
     "securitySchemes": {
-      "AuthBearer": {
-        "type": "apiKey",
-        "name": "X-API-KEY",
-        "in": "header"
+      "HTTPBearer": {
+        "type": "http",
+        "scheme": "bearer"
       }
     }
   }

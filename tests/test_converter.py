@@ -2,10 +2,10 @@ import json
 import logging
 import os
 import re
-import shutil
 import unittest
 
 from app.logic.converter import OpenAPIToKrakenD
+from tests.logic.test_setup_logic import delete_output_folder, create_output_folder
 
 
 class TestConverter(unittest.TestCase):
@@ -18,16 +18,14 @@ class TestConverter(unittest.TestCase):
         """
         Create the output folder if it doesn't exist
         """
-        if not os.path.exists(os.path.join("tests/output")):
-            os.mkdir(os.path.join("tests/output"))
+        create_output_folder()
 
     @classmethod
     def tearDown(cls):
         """
         Delete the output folder if it exists
         """
-        if os.path.exists(os.path.join("tests/output")):
-            shutil.rmtree(os.path.join("tests/output"))
+        delete_output_folder()
 
     def test_name(self):
         """
@@ -87,6 +85,32 @@ class TestConverter(unittest.TestCase):
                                      name="Test gateway")
 
         # Test if a KeyError is thrown if there is no server field in the OpenAPI spec
+        with self.assertRaises(ValueError):
+            converter.convert()
+
+    def test_no_info_field(self):
+        """
+        Test if a ValueError is thrown if there is no info field in the OpenAPI spec
+        """
+        converter = OpenAPIToKrakenD(logging_mode=logging.ERROR,
+                                     input_folder_path="tests/mock_data/no_info/",
+                                     output_folder_path="tests/output",
+                                     name="Test gateway")
+
+        # Test if a ValueError is thrown if there is no info field in the OpenAPI spec
+        with self.assertRaises(ValueError):
+            converter.convert()
+
+    def test_no_version_field(self):
+        """
+        Test if a ValueError is thrown if there is no version field in the OpenAPI spec
+        """
+        converter = OpenAPIToKrakenD(logging_mode=logging.ERROR,
+                                     input_folder_path="tests/mock_data/no_version/",
+                                     output_folder_path="tests/output",
+                                     name="Test gateway")
+
+        # Test if a ValueError is thrown if there is no version field in the OpenAPI spec
         with self.assertRaises(ValueError):
             converter.convert()
 
@@ -376,3 +400,28 @@ ENTRYPOINT FC_ENABLE=1 \\
 """
 
         self.assertEqual(dockerfile_string, dockerfile_template)
+
+    def test_folder_exists(self):
+        """
+        Test if the name in KrakenD.json is equal to "Test gateway" when the folder structure already exists
+        """
+        os.mkdir(os.path.join("tests/output/config"))
+        os.mkdir(os.path.join("tests/output/config/settings"))
+        os.mkdir(os.path.join("tests/output/config/templates"))
+
+        converter = OpenAPIToKrakenD(logging_mode=logging.ERROR,
+                                     input_folder_path="tests/mock_data/full/",
+                                     output_folder_path="tests/output",
+                                     name="Test gateway")
+        converter.convert()
+
+        with open("tests/output/config/krakend.json", "r", encoding="utf-8") as config_file:
+            config = config_file.read()
+
+        config_data = config.replace("[{{template \"Endpoints\".service}}]",
+                                     "\"[{{template \\\"Endpoints\\\".service}}]\"")
+
+        config_json = json.loads(config_data)
+
+        # Test if the name in KrakenD.json is equal to "Test gateway"
+        self.assertEqual(config_json["name"], "Test gateway")

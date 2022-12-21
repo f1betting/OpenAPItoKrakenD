@@ -131,17 +131,16 @@ class OpenAPIToKrakenD:
         if ".V" in name and not self.versioning:
             return name.replace(".V", "V")
 
-        elif ".V" in name and self.versioning:
+        if ".V" in name and self.versioning:
             version = "V" + data["info"]["version"][0:1]
             api_name = re.sub(r"\.V\d", "", name)
 
             return api_name + version
 
-        elif self.versioning:
+        if self.versioning:
             return name + "V" + data["info"]["version"][0:1]
 
-        else:
-            return name
+        return name
 
     def __verify_openapi(self, file):
         """
@@ -153,7 +152,8 @@ class OpenAPIToKrakenD:
             logging.debug("Verifying server")
 
             if "servers" in data.keys() and len(data["servers"]) >= 1 and "url" in data["servers"][0]:
-                if "http://" not in data["servers"][0]["url"] and "https://" not in data["servers"][0]["url"]:  # NOSONAR
+                server = data["servers"][0]["url"]
+                if "http://" not in server and "https://" not in server:  # NOSONAR
                     logging.error(f"{file}: invalid server")
                     raise ValueError
             else:

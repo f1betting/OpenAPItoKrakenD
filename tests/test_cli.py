@@ -6,6 +6,7 @@ import unittest
 from typer.testing import CliRunner
 
 from app.main import app
+from tests.logic.test_setup_logic import create_output_folder, delete_output_folder
 
 
 class TestCLI(unittest.TestCase):
@@ -25,16 +26,14 @@ class TestCLI(unittest.TestCase):
         """
         Create the output folder if it doesn't exist
         """
-        if not os.path.exists(os.path.join("tests/output")):
-            os.mkdir(os.path.join("tests/output"))
+        create_output_folder()
 
     @classmethod
     def tearDown(cls):
         """
         Delete the output folder if it exists
         """
-        if os.path.exists(os.path.join("tests/output")):
-            shutil.rmtree(os.path.join("tests/output"))
+        delete_output_folder()
 
     def test_cli(self):
         """
