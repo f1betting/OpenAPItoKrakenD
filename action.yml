@@ -3,7 +3,7 @@ name: Run Server
 description: Run the mockserver for F1Betting
 
 inputs:
-  input:
+  input-folder:
     required: true
     description: The input folder that contains the OpenAPI specs
   name:
@@ -37,12 +37,12 @@ runs:
         mkdir -p output
         export PYTHONPATH=${{ github.action_path }}
         
-        echo "python -m app.main ${{inputs.input}} output \
+        echo "python -m app.main ${{inputs.input-folder}} output \
           $(if [ -n "${{inputs.name}}" ]; then echo " --name ${{inputs.name}}"; fi) \
           $(if [ -n "${{inputs.stackdriver-project-id}}" ]; then echo " --stackdriver-project-id ${{inputs.stackdriver-project-id}}"; fi) \
           $(if [ -n "${{inputs.disable-versioning}}" ]; then echo " --disable-automatic-versioning"; fi)"
         
-        python -m app.main ${{inputs.input}} output \
+        python -m app.main ${{inputs.input-folder}} output \
           $(if [ -n "${{inputs.name}}" ]; then echo " --name ${{inputs.name}}"; fi) \
           $(if [ -n "${{inputs.stackdriver-project-id}}" ]; then echo " --stackdriver-project-id ${{inputs.stackdriver-project-id}}"; fi) \
           $(if [ -n "${{inputs.disable-versioning}}" ]; then echo " --disable-automatic-versioning"; fi)

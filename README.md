@@ -152,9 +152,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Convert specs to KrakenD config
-        uses: f1betting/OpenAPItoKrakenD@main
+        uses: f1betting/OpenAPItoKrakenD@v1
         with:
-          input: specs
+          input-folder: specs
           name: "krakend_test_gateway"
           stackdriver-project-id: google-project-id
 ````
@@ -165,7 +165,7 @@ There are a few configurations options possible. These are the ones that are ava
 
 | Name                   | Required | Description                                                    |
 |------------------------|----------|----------------------------------------------------------------|
-| input                  | Yes      | The input folder that contains the OpenAPI specs               |
+| input-folder           | Yes      | The input folder that contains the OpenAPI specs               |
 | name                   | No       | The KrakenD API gateway name (no spaces allowed)               |
 | stackdriver-project-id | No       | The Google project-id where Stackdriver logging is enabled for |
 | disable-versioning     | No       | Disable automatic versioning based on OpenAPI specifications   |
