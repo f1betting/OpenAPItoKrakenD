@@ -37,6 +37,10 @@ class OpenAPIToKrakenD:
         for path in self.paths:
             self.files.append(os.path.basename(path))
 
+        if len(self.paths) <= 0:
+            logging.error(f"No files found in '{self.input_folder_path}'")
+            raise FileNotFoundError
+
         logging.info("Verifying OpenAPI files")
         for file in self.files:
             logging.info(f"Verifying {file}")
@@ -147,10 +151,9 @@ class OpenAPIToKrakenD:
             data: dict = json.load(openapi_file)
 
             logging.debug("Verifying server")
-            server = data["servers"][0]["url"]
 
             if "servers" in data.keys() and len(data["servers"]) >= 1 and "url" in data["servers"][0]:
-                if "http://" not in server and "https://" not in server:  # NOSONAR
+                if "http://" not in data["servers"][0]["url"] and "https://" not in data["servers"][0]["url"]:  # NOSONAR
                     logging.error(f"{file}: invalid server")
                     raise ValueError
             else:
@@ -208,7 +211,7 @@ ENTRYPOINT FC_ENABLE=1 \\
                 name = self.__get_name_with_version(file, data)
 
                 # https://docs.python.org/3/library/string.html#format-string-syntax
-                data = f'{{{{ template "{name}" $service.{name}}}}}\n'
+                data = f'{{{{template "{name}" $service.{name}}}}}\n'
 
                 logging.debug(f"Writing service {file[:-5].upper()}")
                 endpoints_file.write(data)

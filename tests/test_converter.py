@@ -31,7 +31,7 @@ class TestConverter(unittest.TestCase):
 
     def test_name(self):
         """
-        Test if the name in KrakenD.json is the same as the name provided
+        Test if the name in KrakenD.json is equal to "Test gateway"
         """
         converter = OpenAPIToKrakenD(logging_mode=logging.ERROR,
                                      input_folder_path="tests/mock_data/full/",
@@ -47,11 +47,13 @@ class TestConverter(unittest.TestCase):
 
         config_json = json.loads(config_data)
 
+        # Test if the name in KrakenD.json is equal to "Test gateway"
         self.assertEqual(config_json["name"], "Test gateway")
 
     def test_stackdriver(self):
         """
-        Test if the stackdriver field has been added and the stackdriver project id is the same as the one provided
+        Test if the stackdriver field has been added
+        Test if the stackdriver project id is the same as the one provided
         """
         converter = OpenAPIToKrakenD(logging_mode=logging.ERROR,
                                      input_folder_path="tests/mock_data/full/",
@@ -68,36 +70,56 @@ class TestConverter(unittest.TestCase):
 
         config_json = json.loads(config_data)
 
+        # Test if the stackdriver field has been added
+        self.assertTrue("stackdriver" in config_json["extra_config"]["telemetry/opencensus"]["exporters"])
+
+        # Test if the stackdriver project id is the same as the one provided
         self.assertEqual(config_json["extra_config"]["telemetry/opencensus"]["exporters"]["stackdriver"]["project_id"],
                          "gateway-stackdriver")
 
     def test_no_server(self):
         """
-        Test if a KeyError is thrown if there is no server field in the OpenAPI spec
+        Test if a ValueError is thrown if there is no server field in the OpenAPI spec
         """
         converter = OpenAPIToKrakenD(logging_mode=logging.ERROR,
                                      input_folder_path="tests/mock_data/no_server/",
                                      output_folder_path="tests/output",
                                      name="Test gateway")
 
-        with self.assertRaises(KeyError):
+        # Test if a KeyError is thrown if there is no server field in the OpenAPI spec
+        with self.assertRaises(ValueError):
             converter.convert()
 
     def test_invalid_server(self):
         """
-        Test if an HTTPException is thrown if there is no valid server in the server field
+        Test if an ValueError is thrown if there is no valid server in the server field
         """
         converter = OpenAPIToKrakenD(logging_mode=logging.ERROR,
                                      input_folder_path="tests/mock_data/invalid_server/",
                                      output_folder_path="tests/output",
                                      name="Test gateway")
 
+        # Test if an ValueError is thrown if there is no valid server in the server field
         with self.assertRaises(ValueError):
+            converter.convert()
+
+    def test_empty_folder(self):
+        """
+        Test if a folder with no JSON files raises a FileNotFoundError
+        """
+        converter = OpenAPIToKrakenD(logging_mode=logging.ERROR,
+                                     input_folder_path="tests/mock_data/empty_folder/",
+                                     output_folder_path="tests/output",
+                                     name="Test gateway")
+
+        # Test if a folder with no JSON files raises a FileNotFoundError
+        with self.assertRaises(FileNotFoundError):
             converter.convert()
 
     def test_security_header_on_endpoint(self):
         """
-        Test if a specific endpoint contains the Authorization header
+        Test if /bet/{season}/{race} contains the Authorization header
+        Test if /users does not contain the Authorization header
         """
         converter = OpenAPIToKrakenD(logging_mode=logging.ERROR,
                                      input_folder_path="tests/mock_data/full/",
@@ -120,15 +142,73 @@ class TestConverter(unittest.TestCase):
         for endpoint in endpoints_data:
             endpoints.append(json.loads(endpoint))
 
-        # /bet/{season}/{race} (auth required)
+        # Test if /bet/{season}/{race} contains the Authorization header
         self.assertTrue("Authorization" in endpoints[3]["input_headers"])
 
-        # /users (no auth required)
+        # Test if /users does not contain the Authorization header
         self.assertFalse("Authorization" in endpoints[0]["input_headers"])
+
+    def test_no_security_headers(self):
+        """
+        Test if /bet/{season}/{race} does not contain the Authorization header
+        (Security schemes do not exist in the entire spec)
+        """
+        converter = OpenAPIToKrakenD(logging_mode=logging.ERROR,
+                                     input_folder_path="tests/mock_data/no_security_schemes/",
+                                     output_folder_path="tests/output",
+                                     name="Test gateway")
+        converter.convert()
+
+        with open("tests/output/config/templates/OPENAPI.tmpl", "r", encoding="utf-8") as template_file:
+            template = template_file.read()
+
+        # Remove templating
+        config_data = re.sub(r"^({{(.*?)}})", "", template, flags=re.M).strip()
+
+        # Split objects
+        endpoints_data = re.split(r"(?<=}),", config_data, flags=re.M)
+
+        endpoints = []
+
+        # Load JSON to array
+        for endpoint in endpoints_data:
+            endpoints.append(json.loads(endpoint))
+
+        # Test if /bet/{season}/{race} does not contain the Authorization header
+        self.assertFalse("Authorization" in endpoints[3]["input_headers"])
+
+    def test_wrong_security_headers(self):
+        """
+        Test if /bet/{season}/{race} does not contain the Authorization header
+        (Security scheme is named different from the one in the header, therefore it should not add it)
+        """
+        converter = OpenAPIToKrakenD(logging_mode=logging.ERROR,
+                                     input_folder_path="tests/mock_data/wrong_security_scheme/",
+                                     output_folder_path="tests/output",
+                                     name="Test gateway")
+        converter.convert()
+
+        with open("tests/output/config/templates/OPENAPI.tmpl", "r", encoding="utf-8") as template_file:
+            template = template_file.read()
+
+        # Remove templating
+        config_data = re.sub(r"^({{(.*?)}})", "", template, flags=re.M).strip()
+
+        # Split objects
+        endpoints_data = re.split(r"(?<=}),", config_data, flags=re.M)
+
+        endpoints = []
+
+        # Load JSON to array
+        for endpoint in endpoints_data:
+            endpoints.append(json.loads(endpoint))
+
+        # Test if /bet/{season}/{race} does not contain the Authorization header
+        self.assertFalse("Authorization" in endpoints[3]["input_headers"])
 
     def test_header_parameter_on_endpoint(self):
         """
-        Test if a specific endpoint contains the header from the parameters
+        Test if /users/{user_id} contains user_id as a header parameter
         """
         converter = OpenAPIToKrakenD(logging_mode=logging.ERROR,
                                      input_folder_path="tests/mock_data/headers/",
@@ -151,12 +231,13 @@ class TestConverter(unittest.TestCase):
         for endpoint in endpoints_data:
             endpoints.append(json.loads(endpoint))
 
-        # /users/{user_id} (user_id as header parameter)
+        # Test if /users/{user_id} contains user_id as a header parameter
         self.assertTrue("user_id" in endpoints[2]["input_headers"])
 
-    def test_no_version_define(self):
+    def test_no_version_defined(self):
         """
-        Test the path if there is no version defined
+        Test if OPENAPI.tmpl has the correct prefix without a version
+        Test if Endpoints.tmpl has the correct name and version
         """
         converter = OpenAPIToKrakenD(logging_mode=logging.ERROR,
                                      input_folder_path="tests/mock_data/full/",
@@ -165,48 +246,47 @@ class TestConverter(unittest.TestCase):
                                      no_versioning=True)
         converter.convert()
 
-        with open("tests/output/config/templates/OPENAPI.tmpl", "r", encoding="utf-8") as template_file:
-            template = template_file.read()
+        with open("tests/output/config/templates/OPENAPI.tmpl", "r", encoding="utf-8") as openapi_template_file:
+            openapi_data = openapi_template_file.read()
 
-        # Separate path templating
-        config_data = re.findall(r"^({{\$prefix := (.*?)}})", template, flags=re.M)
+        # Test if OPENAPI.tmpl has the correct prefix without a version
+        self.assertTrue('{{$prefix := "/openapi"}}' in openapi_data)
 
-        # Find path value
-        endpoints_data = re.findall(r"\"(.*?)\"", str(config_data[0]))
+        with open("tests/output/config/templates/Endpoints.tmpl", "r", encoding="utf-8") as endpoints_file:
+            endpoints = endpoints_file.read()
 
-        # Assign path value
-        path = endpoints_data[0]
-
-        self.assertEqual(path, "/openapi")
+        # Test if Endpoints.tmpl has the correct name and version
+        self.assertTrue('{{template "OPENAPI" $service.OPENAPI}}' in endpoints)
 
     def test_auto_versioning(self):
         """
-        Test the path if there is no version defined
+        Test if OPENAPI.tmpl has the correct prefix with version V1
+        (no_versioning set to False, meaning it should pick V1 from the OpenAPI spec's Version field)
         """
         converter = OpenAPIToKrakenD(logging_mode=logging.ERROR,
                                      input_folder_path="tests/mock_data/full/",
                                      output_folder_path="tests/output",
-                                     name="Test gateway")
+                                     name="Test gateway",
+                                     no_versioning=False)
         converter.convert()
 
-        with open("tests/output/config/templates/OPENAPI.tmpl", "r", encoding="utf-8") as template_file:
-            template = template_file.read()
+        with open("tests/output/config/templates/OPENAPI.tmpl", "r", encoding="utf-8") as openapi_template_file:
+            openapi_data = openapi_template_file.read()
 
-        # Separate path templating
-        config_data = re.findall(r"^({{\$prefix := (.*?)}})", template, flags=re.M)
+        # Test if OPENAPI.tmpl has the correct prefix with version V1
+        self.assertTrue('{{$prefix := "/openapi/v1"}}' in openapi_data)
 
-        # Find path value
-        endpoints_data = re.findall(r"\"(.*?)\"", str(config_data[0]))
+        with open("tests/output/config/templates/Endpoints.tmpl", "r", encoding="utf-8") as endpoints_file:
+            endpoints = endpoints_file.read()
 
-        # Assign path value
-        path = endpoints_data[0]
-
-        self.assertEqual(path, "/openapi/v1")
+        # Test if Endpoints.tmpl has the correct name and version
+        self.assertTrue('{{template "OPENAPIV1" $service.OPENAPIV1}}' in endpoints)
 
     def test_auto_versioning_conflict_v1(self):
         """
-        Test the path if there is version V1 defined
-        (no_versioning set to True, meaning it should pick V1 from the OpenAPI spec filename)
+        Test if OPENAPI.V1.tmpl has the correct prefix with version V1
+        Test if Endpoints.tmpl has the correct name and version
+        (no_versioning set to True, meaning it should pick V1 from the filename)
         """
         converter = OpenAPIToKrakenD(logging_mode=logging.ERROR,
                                      input_folder_path="tests/mock_data/version_conflict/",
@@ -215,24 +295,23 @@ class TestConverter(unittest.TestCase):
                                      no_versioning=True)
         converter.convert()
 
-        with open("tests/output/config/templates/OPENAPI.V1.tmpl", "r", encoding="utf-8") as template_file:
-            template = template_file.read()
+        with open("tests/output/config/templates/OPENAPI.V1.tmpl", "r", encoding="utf-8") as openapi_template_file:
+            openapi_data = openapi_template_file.read()
 
-        # Separate path templating
-        config_data = re.findall(r"^({{\$prefix := (.*?)}})", template, flags=re.M)
+        # Test if OPENAPI.V1.tmpl has the correct prefix with version V1
+        self.assertTrue('{{$prefix := "/openapi/v1"}}' in openapi_data)
 
-        # Find path value
-        endpoints_data = re.findall(r"\"(.*?)\"", str(config_data[0]))
+        with open("tests/output/config/templates/Endpoints.tmpl", "r", encoding="utf-8") as endpoints_file:
+            endpoints = endpoints_file.read()
 
-        # Assign path value
-        path = endpoints_data[0]
-
-        self.assertEqual(path, "/openapi/v1")
+        # Test if Endpoints.tmpl has the correct name and version
+        self.assertTrue('{{template "OPENAPIV1" $service.OPENAPIV1}}' in endpoints)
 
     def test_auto_versioning_conflict_v2(self):
         """
-        Test the path if there is version V2 defined
-        (no_versioning set to False, meaning it should pick V2 from the OpenAPI spec itself)
+        Test if OPENAPI.V1.tmpl has the correct prefix with version V2
+        Test if Endpoints.tmpl has the correct name and version
+        (no_versioning set to False, meaning it should pick V2 from the OpenAPI spec's Version field)
         """
         converter = OpenAPIToKrakenD(logging_mode=logging.ERROR,
                                      input_folder_path="tests/mock_data/version_conflict/",
@@ -241,43 +320,17 @@ class TestConverter(unittest.TestCase):
                                      no_versioning=False)
         converter.convert()
 
-        with open("tests/output/config/templates/OPENAPI.V1.tmpl", "r", encoding="utf-8") as template_file:
-            template = template_file.read()
+        with open("tests/output/config/templates/OPENAPI.V1.tmpl", "r", encoding="utf-8") as openapi_template_file:
+            openapi_data = openapi_template_file.read()
 
-        # Separate path templating
-        config_data = re.findall(r"^({{\$prefix := (.*?)}})", template, flags=re.M)
+        # Test if OPENAPI.V1.tmpl has the correct prefix with version V2
+        self.assertTrue('{{$prefix := "/openapi/v2"}}' in openapi_data)
 
-        # Find path value
-        endpoints_data = re.findall(r"\"(.*?)\"", str(config_data[0]))
+        with open("tests/output/config/templates/Endpoints.tmpl", "r", encoding="utf-8") as endpoints_file:
+            endpoints = endpoints_file.read()
 
-        # Assign path value
-        path = endpoints_data[0]
-
-        self.assertEqual(path, "/openapi/v2")
-
-    def test_v1_version_define(self):
-        """
-        Test the path if there is a version (v1) defined
-        """
-        converter = OpenAPIToKrakenD(logging_mode=logging.ERROR,
-                                     input_folder_path="tests/mock_data/version/",
-                                     output_folder_path="tests/output",
-                                     name="Test gateway")
-        converter.convert()
-
-        with open("tests/output/config/templates/OPENAPI.V1.tmpl", "r", encoding="utf-8") as template_file:
-            template = template_file.read()
-
-        # Separate path templating
-        config_data = re.findall(r"^({{\$prefix := (.*?)}})", template, flags=re.M)
-
-        # Find path value
-        endpoints_data = re.findall(r"\"(.*?)\"", str(config_data[0]))
-
-        # Assign path value
-        path = endpoints_data[0]
-
-        self.assertEqual(path, "/openapi/v1")
+        # Test if Endpoints.tmpl has the correct name and version
+        self.assertTrue('{{template "OPENAPIV2" $service.OPENAPIV2}}' in endpoints)
 
     def test_service(self):
         """
@@ -294,3 +347,32 @@ class TestConverter(unittest.TestCase):
             service_json = json.load(service_file)
 
         self.assertEqual(service_json["OPENAPI"], "https://f1-betting.app")
+
+    def test_dockerfile(self):
+        """
+        Test if the dockerfile is made correctly
+        """
+        converter = OpenAPIToKrakenD(logging_mode=logging.ERROR,
+                                     input_folder_path="tests/mock_data/full/",
+                                     output_folder_path="tests/output",
+                                     name="Test gateway")
+        converter.convert()
+
+        with open("tests/output/Dockerfile", "r", encoding="utf-8") as dockerfile:
+            dockerfile_string = dockerfile.read()
+
+        dockerfile_template = """FROM devopsfaith/krakend:2.1.2
+
+COPY /config /etc/krakend/config
+
+RUN FC_ENABLE=1 \\
+    FC_SETTINGS="config/settings" \\
+    FC_TEMPLATES="config/templates" \\
+    krakend check -t -d -c "config/krakend.json"
+ENTRYPOINT FC_ENABLE=1 \\
+    FC_SETTINGS="/etc/krakend/config/settings"\\
+    FC_TEMPLATES="/etc/krakend/config/templates" \\
+    krakend run -c "/etc/krakend/config/krakend.json"
+"""
+
+        self.assertEqual(dockerfile_string, dockerfile_template)
