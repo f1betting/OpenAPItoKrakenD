@@ -11,6 +11,8 @@
     <a href="https://github.com/OpenAPItoKrakenD/issues">Request Feature</a>
     <br />
     <br />
+    <img alt="GitHub Latest Version" src="https://img.shields.io/github/v/release/f1betting/OpenAPItoKrakenD?label=Latest%20release&style=flat">
+    <br />
     <img alt="SonarCloud coverage" src="https://sonarcloud.io/api/project_badges/measure?project=f1betting_OpenAPItoKrakenD&metric=coverage">
     <img alt="SonarCloud quality gate" src="https://sonarcloud.io/api/project_badges/measure?project=f1betting_OpenAPItoKrakenD&metric=alert_status">
     <img alt="SonarCloud code smells" src="https://sonarcloud.io/api/project_badges/measure?project=f1betting_OpenAPItoKrakenD&metric=code_smells">
