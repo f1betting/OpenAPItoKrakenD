@@ -387,7 +387,7 @@ class TestConverter(unittest.TestCase):
         with open("tests/output/Dockerfile", "r", encoding="utf-8") as dockerfile:
             dockerfile_string = dockerfile.read()
 
-        dockerfile_template = """FROM devopsfaith/krakend:2.1.2
+        dockerfile_template = """FROM devopsfaith/krakend:2.1.3
 
 COPY /config /etc/krakend/config
 
