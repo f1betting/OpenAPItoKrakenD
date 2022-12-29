@@ -90,22 +90,34 @@ class OpenAPIToKrakenD:
         formatted_endpoint = {
             "endpoint": "{{ $prefix }}" + endpoint,
             "method": method,
-            "output_encoding": "no-op",
-            "timeout": "3600s",
-            "input_query_strings": [],
             "backend": [
                 {
                     "url_pattern": endpoint,
-                    "encoding": "no-op",
                     "method": method,
                     "host": [
                         "{{ $host }}"
                     ],
-                    "disable_host_sanitize": False
                 }
             ],
             "input_headers": headers
         }
+
+        logging.debug("Adding endpoint configuration")
+        with open("app/config/endpoint.json") as endpoint_config_file:
+            endpoint_config = json.load(endpoint_config_file)
+
+        for key in endpoint_config:
+            logging.debug(f"Adding {key}")
+            formatted_endpoint[key] = endpoint_config[key]
+        logging.debug("Added endpoint configuration")
+
+        logging.debug("Adding backend configuration")
+        with open("app/config/backend.json") as backend_config_file:
+            backend_config = json.load(backend_config_file)
+
+        for key in backend_config:
+            formatted_endpoint["backend"][0][key] = backend_config[key]
+        logging.debug("Added backend configuration")
 
         return formatted_endpoint
 
@@ -171,18 +183,23 @@ class OpenAPIToKrakenD:
         """
         Write the dockerfile
         """
-        data = """FROM devopsfaith/krakend:2.1.3
+        data = """# Build KrakenD configuration file
+FROM devopsfaith/krakend:2.1.3 as builder
 
 COPY /config /etc/krakend/config
 
 RUN FC_ENABLE=1 \\
+    FC_OUT=/tmp/krakend.json \\
     FC_SETTINGS="config/settings" \\
     FC_TEMPLATES="config/templates" \\
     krakend check -t -d -c "config/krakend.json"
-ENTRYPOINT FC_ENABLE=1 \\
-    FC_SETTINGS="/etc/krakend/config/settings"\\
-    FC_TEMPLATES="/etc/krakend/config/templates" \\
-    krakend run -c "/etc/krakend/config/krakend.json"
+
+RUN krakend check -c /tmp/krakend.json --lint
+
+# Add the built configuration file to the final Docker image 
+FROM devopsfaith/krakend:2.1.3
+
+COPY --from=builder --chown=krakend /tmp/krakend.json .
 """
 
         with open(f"{self.output_folder_path}/Dockerfile", "w+", encoding="utf-8") as dockerfile:
@@ -259,51 +276,17 @@ ENTRYPOINT FC_ENABLE=1 \\
         krakend_config = {
             "version": 3,
             "name": self.name,
-            "cache_ttl": "3600s",
-            "timeout": "45s",
-            "extra_config": {
-                "security/cors": {
-                    "allow_origins": [
-                        "http*"
-                    ],
-                    "allow_methods": [
-                        "GET",
-                        "HEAD",
-                        "POST",
-                        "PUT",
-                        "DELETE",
-                        "OPTIONS"
-                    ],
-                    "expose_headers": [
-                        "Content-Length",
-                        "Content-Type"
-                    ],
-                    "allow_headers": [
-                        "Content-Type",
-                        "Accept-Language",
-                        "Origin",
-                        "Authorization"
-                    ],
-                    "max_age": "12h",
-                    "allow_credentials": True,
-                    "debug": True
-                },
-                "router": {
-                    "logger_skip_paths": [
-                        "/__health"
-                    ],
-                    "disable_access_log": True
-                },
-                "telemetry/logging": {
-                    "level": "INFO",
-                    "prefix": "[KRAKEND]",
-                    "syslog": True,
-                    "stdout": True,
-                    "format": "logstash"
-                }
-            },
             "endpoints": '[{{template "Endpoints".service}}]'
         }
+
+        logging.debug("Adding configuration")
+        with open("app/config/config.json") as config_file:
+            config = json.load(config_file)
+
+        for key in config:
+            logging.debug(f"Adding {key}")
+            krakend_config[key] = config[key]
+        logging.debug("Added configuration")
 
         if self.stackdriver_project_id:
             logging.debug("Adding stackdriver configuration")
