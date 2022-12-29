@@ -103,7 +103,7 @@ class OpenAPIToKrakenD:
         }
 
         logging.debug("Adding endpoint configuration")
-        with open("app/config/endpoint.json") as endpoint_config_file:
+        with open("app/config/endpoint.json", "r", encoding="utf-8") as endpoint_config_file:
             endpoint_config = json.load(endpoint_config_file)
 
         for key in endpoint_config:
@@ -112,7 +112,7 @@ class OpenAPIToKrakenD:
         logging.debug("Added endpoint configuration")
 
         logging.debug("Adding backend configuration")
-        with open("app/config/backend.json") as backend_config_file:
+        with open("app/config/backend.json", "r", encoding="utf-8") as backend_config_file:
             backend_config = json.load(backend_config_file)
 
         for key in backend_config:
@@ -280,7 +280,7 @@ COPY --from=builder --chown=krakend /tmp/krakend.json .
         }
 
         logging.debug("Adding configuration")
-        with open("app/config/config.json") as config_file:
+        with open("app/config/config.json", "r", encoding="utf-8") as config_file:
             config = json.load(config_file)
 
         for key in config:
