@@ -161,6 +161,7 @@ cython_debug/
 
 output/config/krakend.json
 output/Dockerfile
+output/config/credentials.json
 
 output/config/settings/*
 !output/config/settings/.gitkeep
