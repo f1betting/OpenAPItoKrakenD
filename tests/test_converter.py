@@ -9,6 +9,7 @@ from tests.logic.test_setup_logic import delete_output_folder, create_output_fol
 
 
 # pylint:disable=duplicate-code
+# pylint:disable=too-many-public-methods
 
 class TestConverter(unittest.TestCase):
     """
@@ -35,8 +36,7 @@ class TestConverter(unittest.TestCase):
         """
         converter = OpenAPIToKrakenD(logging_mode=logging.ERROR,
                                      input_folder_path="tests/mock_data/full/",
-                                     output_folder_path="tests/output",
-                                     name="Test gateway")
+                                     output_folder_path="tests/output")
         converter.convert()
 
         with open("tests/output/config/krakend.json", "r", encoding="utf-8") as config_file:
@@ -56,10 +56,8 @@ class TestConverter(unittest.TestCase):
         Test if the stackdriver project id is the same as the one provided
         """
         converter = OpenAPIToKrakenD(logging_mode=logging.ERROR,
-                                     input_folder_path="tests/mock_data/full/",
-                                     output_folder_path="tests/output",
-                                     name="Test gateway",
-                                     stackdriver_project_id="gateway-stackdriver")
+                                     input_folder_path="tests/mock_data/stackdriver/",
+                                     output_folder_path="tests/output")
         converter.convert()
 
         with open("tests/output/config/krakend.json", "r", encoding="utf-8") as config_file:
@@ -83,8 +81,7 @@ class TestConverter(unittest.TestCase):
         """
         converter = OpenAPIToKrakenD(logging_mode=logging.ERROR,
                                      input_folder_path="tests/mock_data/no_server/",
-                                     output_folder_path="tests/output",
-                                     name="Test gateway")
+                                     output_folder_path="tests/output")
 
         # Test if a KeyError is thrown if there is no server field in the OpenAPI spec
         with self.assertRaises(ValueError):
@@ -96,8 +93,7 @@ class TestConverter(unittest.TestCase):
         """
         converter = OpenAPIToKrakenD(logging_mode=logging.ERROR,
                                      input_folder_path="tests/mock_data/no_info/",
-                                     output_folder_path="tests/output",
-                                     name="Test gateway")
+                                     output_folder_path="tests/output")
 
         # Test if a ValueError is thrown if there is no info field in the OpenAPI spec
         with self.assertRaises(ValueError):
@@ -109,8 +105,7 @@ class TestConverter(unittest.TestCase):
         """
         converter = OpenAPIToKrakenD(logging_mode=logging.ERROR,
                                      input_folder_path="tests/mock_data/no_version/",
-                                     output_folder_path="tests/output",
-                                     name="Test gateway")
+                                     output_folder_path="tests/output")
 
         # Test if a ValueError is thrown if there is no version field in the OpenAPI spec
         with self.assertRaises(ValueError):
@@ -122,8 +117,7 @@ class TestConverter(unittest.TestCase):
         """
         converter = OpenAPIToKrakenD(logging_mode=logging.ERROR,
                                      input_folder_path="tests/mock_data/invalid_server/",
-                                     output_folder_path="tests/output",
-                                     name="Test gateway")
+                                     output_folder_path="tests/output")
 
         # Test if an ValueError is thrown if there is no valid server in the server field
         with self.assertRaises(ValueError):
@@ -135,8 +129,7 @@ class TestConverter(unittest.TestCase):
         """
         converter = OpenAPIToKrakenD(logging_mode=logging.ERROR,
                                      input_folder_path="tests/mock_data/empty_folder/",
-                                     output_folder_path="tests/output",
-                                     name="Test gateway")
+                                     output_folder_path="tests/output")
 
         # Test if a folder with no JSON files raises a FileNotFoundError
         with self.assertRaises(FileNotFoundError):
@@ -149,8 +142,7 @@ class TestConverter(unittest.TestCase):
         """
         converter = OpenAPIToKrakenD(logging_mode=logging.ERROR,
                                      input_folder_path="tests/mock_data/full/",
-                                     output_folder_path="tests/output",
-                                     name="Test gateway")
+                                     output_folder_path="tests/output")
         converter.convert()
 
         with open("tests/output/config/templates/OPENAPI.tmpl", "r", encoding="utf-8") as template_file:
@@ -181,8 +173,7 @@ class TestConverter(unittest.TestCase):
         """
         converter = OpenAPIToKrakenD(logging_mode=logging.ERROR,
                                      input_folder_path="tests/mock_data/no_security_schemes/",
-                                     output_folder_path="tests/output",
-                                     name="Test gateway")
+                                     output_folder_path="tests/output")
         converter.convert()
 
         with open("tests/output/config/templates/OPENAPI.tmpl", "r", encoding="utf-8") as template_file:
@@ -210,8 +201,7 @@ class TestConverter(unittest.TestCase):
         """
         converter = OpenAPIToKrakenD(logging_mode=logging.ERROR,
                                      input_folder_path="tests/mock_data/wrong_security_scheme/",
-                                     output_folder_path="tests/output",
-                                     name="Test gateway")
+                                     output_folder_path="tests/output")
         converter.convert()
 
         with open("tests/output/config/templates/OPENAPI.tmpl", "r", encoding="utf-8") as template_file:
@@ -238,8 +228,7 @@ class TestConverter(unittest.TestCase):
         """
         converter = OpenAPIToKrakenD(logging_mode=logging.ERROR,
                                      input_folder_path="tests/mock_data/headers/",
-                                     output_folder_path="tests/output",
-                                     name="Test gateway")
+                                     output_folder_path="tests/output")
         converter.convert()
 
         with open("tests/output/config/templates/OPENAPI.tmpl", "r", encoding="utf-8") as template_file:
@@ -268,7 +257,6 @@ class TestConverter(unittest.TestCase):
         converter = OpenAPIToKrakenD(logging_mode=logging.ERROR,
                                      input_folder_path="tests/mock_data/full/",
                                      output_folder_path="tests/output",
-                                     name="Test gateway",
                                      no_versioning=True)
         converter.convert()
 
@@ -292,7 +280,6 @@ class TestConverter(unittest.TestCase):
         converter = OpenAPIToKrakenD(logging_mode=logging.ERROR,
                                      input_folder_path="tests/mock_data/full/",
                                      output_folder_path="tests/output",
-                                     name="Test gateway",
                                      no_versioning=False)
         converter.convert()
 
@@ -317,7 +304,6 @@ class TestConverter(unittest.TestCase):
         converter = OpenAPIToKrakenD(logging_mode=logging.ERROR,
                                      input_folder_path="tests/mock_data/version_conflict/",
                                      output_folder_path="tests/output",
-                                     name="Test gateway",
                                      no_versioning=True)
         converter.convert()
 
@@ -342,7 +328,6 @@ class TestConverter(unittest.TestCase):
         converter = OpenAPIToKrakenD(logging_mode=logging.ERROR,
                                      input_folder_path="tests/mock_data/version_conflict/",
                                      output_folder_path="tests/output",
-                                     name="Test gateway",
                                      no_versioning=False)
         converter.convert()
 
@@ -365,7 +350,6 @@ class TestConverter(unittest.TestCase):
         converter = OpenAPIToKrakenD(logging_mode=logging.ERROR,
                                      input_folder_path="tests/mock_data/full/",
                                      output_folder_path="tests/output",
-                                     name="Test gateway",
                                      no_versioning=True)
         converter.convert()
 
@@ -380,8 +364,7 @@ class TestConverter(unittest.TestCase):
         """
         converter = OpenAPIToKrakenD(logging_mode=logging.ERROR,
                                      input_folder_path="tests/mock_data/full/",
-                                     output_folder_path="tests/output",
-                                     name="Test gateway")
+                                     output_folder_path="tests/output")
         converter.convert()
 
         with open("tests/output/Dockerfile", "r", encoding="utf-8") as dockerfile:
@@ -400,10 +383,47 @@ RUN FC_ENABLE=1 \\
 
 RUN krakend check -c /tmp/krakend.json --lint
 
-# Add the built configuration file to the final Docker image 
+# Add the built configuration file to the final Docker image
 FROM devopsfaith/krakend:2.1.3
 
+COPY --from=builder --chown=krakend:root /tmp/krakend.json ."""
+
+        self.assertEqual(dockerfile_string, dockerfile_template)
+
+    def test_custom_dockerfile(self):
+        """
+        Test if the custom dockerfile is made correctly
+        """
+        converter = OpenAPIToKrakenD(logging_mode=logging.ERROR,
+                                     input_folder_path="tests/mock_data/custom_dockerfile/",
+                                     output_folder_path="tests/output")
+        converter.convert()
+
+        with open("tests/output/Dockerfile", "r", encoding="utf-8") as dockerfile:
+            dockerfile_string = dockerfile.read()
+
+        dockerfile_template = """# Build KrakenD configuration file
+FROM devopsfaith/krakend:2.1.3 as builder
+
+COPY /config /etc/krakend/config
+
+RUN FC_ENABLE=1 \\
+    FC_OUT=/tmp/krakend.json \\
+    FC_SETTINGS="config/settings" \\
+    FC_TEMPLATES="config/templates" \\
+    krakend check -t -d -c "config/krakend.json"
+
+RUN krakend check -c /tmp/krakend.json --lint
+
+# Add the built configuration file to the final Docker image
+FROM devopsfaith/krakend:2.1.3
+
+COPY /config/plugins /etc/krakend/config/plugins
+COPY /config/credentials.json /etc/krakend/config/
+
 COPY --from=builder --chown=krakend /tmp/krakend.json .
+
+ENV GOOGLE_APPLICATION_CREDENTIALS="/etc/krakend/config/credentials.json"
 """
 
         self.assertEqual(dockerfile_string, dockerfile_template)
@@ -418,8 +438,7 @@ COPY --from=builder --chown=krakend /tmp/krakend.json .
 
         converter = OpenAPIToKrakenD(logging_mode=logging.ERROR,
                                      input_folder_path="tests/mock_data/full/",
-                                     output_folder_path="tests/output",
-                                     name="Test gateway")
+                                     output_folder_path="tests/output")
         converter.convert()
 
         with open("tests/output/config/krakend.json", "r", encoding="utf-8") as config_file:

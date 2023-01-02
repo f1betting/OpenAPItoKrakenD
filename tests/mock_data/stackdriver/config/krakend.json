@@ -1,4 +1,6 @@
 {
+  "name": "KrakenD API Gateway",
+  "version": 3,
   "cache_ttl": "3600s",
   "timeout": "45s",
   "extra_config": {
@@ -40,6 +42,24 @@
       "syslog": true,
       "stdout": true,
       "format": "logstash"
+    },
+    "telemetry/opencensus": {
+      "sample_rate": 100,
+      "reporting_period": 60,
+      "enabled_layers": {
+        "backend": true,
+        "router": true,
+        "pipe": true
+      },
+      "exporters": {
+        "stackdriver": {
+          "project_id": "gateway-stackdriver",
+          "metric_prefix": "krakend",
+          "default_labels": {
+            "env": "production"
+          }
+        }
+      }
     }
   }
 }

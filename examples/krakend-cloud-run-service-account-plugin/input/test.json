@@ -1,0 +1,30 @@
+{
+  "openapi": "3.0.2",
+  "info": {
+    "title": "Test",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://localhost:8000"
+    }
+  ],
+  "paths": {
+    "/test": {
+      "get": {
+        "summary": "Root",
+        "operationId": "root_test_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

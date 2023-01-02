@@ -39,7 +39,7 @@ class TestCLI(unittest.TestCase):
         """
         Test if the name in KrakenD.json is the same as the name provided
         """
-        self.runner.invoke(app, ["tests/mock_data/full", "tests/output", "--name", "Test gateway"])
+        self.runner.invoke(app, ["tests/mock_data/full", "tests/output"])
 
         with open("tests/output/config/krakend.json", "r", encoding="utf-8") as config_file:
             config = config_file.read()
