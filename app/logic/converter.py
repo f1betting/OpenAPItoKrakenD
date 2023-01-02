@@ -13,21 +13,18 @@ class OpenAPIToKrakenD:
     """
 
     # pylint: disable=too-many-arguments
-    def __init__(self, logging_mode: int, input_folder_path: str, output_folder_path: str, name: str,
-                 stackdriver_project_id: str = None, no_versioning: bool = False):
+    def __init__(self, logging_mode: int, input_folder_path: str, output_folder_path: str, no_versioning: bool = False):
         """
         Initialize converter
         """
         logging.basicConfig(level=logging_mode, format="[%(levelname)s]: %(message)s")  # NOSONAR
 
         self.paths: list = glob.glob(f"{input_folder_path}/*.json")
+        self.config_paths: list = glob.glob(f"{input_folder_path}/config/*.json")
         self.files: list = []
+        self.config_files: list = []
         self.input_folder_path: str = input_folder_path
         self.output_folder_path: str = output_folder_path
-
-        self.stackdriver_project_id: str = stackdriver_project_id
-
-        self.name: str = name
 
         self.versioning: bool = not no_versioning
 
@@ -41,6 +38,11 @@ class OpenAPIToKrakenD:
         if len(self.paths) <= 0:
             logging.error(f"No files found in '{self.input_folder_path}'")
             raise FileNotFoundError
+
+        if len(self.config_paths) > 0:
+            logging.info("Using custom configuration files")
+            for config_path in self.config_paths:
+                self.config_files.append(os.path.basename(config_path))
 
         logging.info("Verifying OpenAPI files")
         for file in self.files:
@@ -78,8 +80,7 @@ class OpenAPIToKrakenD:
 
         return self
 
-    @staticmethod
-    def __new_endpoint(endpoint: str, method: str, headers: list):
+    def __new_endpoint(self, endpoint: str, method: str, headers: list):
         """
         Create a KrakenD endpoint
         """
@@ -103,8 +104,14 @@ class OpenAPIToKrakenD:
         }
 
         logging.debug("Adding endpoint configuration")
-        with open("app/config/endpoint.json", "r", encoding="utf-8") as endpoint_config_file:
-            endpoint_config = json.load(endpoint_config_file)
+        if "endpoint.json" in self.config_files:
+            logging.debug("Using custom endpoint configuration")
+            with open(f"{self.input_folder_path}/config/endpoint.json", "r", encoding="utf-8") as endpoint_config_file:
+                endpoint_config = json.load(endpoint_config_file)
+        else:
+            logging.debug("Using default endpoint configuration")
+            with open("app/config/endpoint.json", "r", encoding="utf-8") as endpoint_config_file:
+                endpoint_config = json.load(endpoint_config_file)
 
         for key in endpoint_config:
             logging.debug(f"Adding {key}")
@@ -112,8 +119,14 @@ class OpenAPIToKrakenD:
         logging.debug("Added endpoint configuration")
 
         logging.debug("Adding backend configuration")
-        with open("app/config/backend.json", "r", encoding="utf-8") as backend_config_file:
-            backend_config = json.load(backend_config_file)
+        if "backend.json" in self.config_files:
+            logging.debug("Using custom backend configuration")
+            with open(f"{self.input_folder_path}/config/backend.json", "r", encoding="utf-8") as backend_config_file:
+                backend_config = json.load(backend_config_file)
+        else:
+            logging.debug("Using default backend configuration")
+            with open("app/config/backend.json", "r", encoding="utf-8") as backend_config_file:
+                backend_config = json.load(backend_config_file)
 
         for key in backend_config:
             formatted_endpoint["backend"][0][key] = backend_config[key]
@@ -274,42 +287,23 @@ COPY --from=builder --chown=krakend /tmp/krakend.json .
         """
         logging.info("Generating config")
         krakend_config = {
-            "version": 3,
-            "name": self.name,
             "endpoints": '[{{template "Endpoints".service}}]'
         }
 
         logging.debug("Adding configuration")
-        with open("app/config/config.json", "r", encoding="utf-8") as config_file:
-            config = json.load(config_file)
+        if "krakend.json" in self.config_files:
+            logging.debug("Using custom krakend configuration")
+            with open(f"{self.input_folder_path}/config/krakend.json", "r", encoding="utf-8") as config_file:
+                config = json.load(config_file)
+        else:
+            logging.debug("Using default krakend configuration")
+            with open("app/config/krakend.json", "r", encoding="utf-8") as config_file:
+                config = json.load(config_file)
 
         for key in config:
             logging.debug(f"Adding {key}")
             krakend_config[key] = config[key]
         logging.debug("Added configuration")
-
-        if self.stackdriver_project_id:
-            logging.debug("Adding stackdriver configuration")
-            krakend_config["extra_config"]["telemetry/opencensus"] = \
-                {
-                    "sample_rate": 100,
-                    "reporting_period": 60,
-                    "enabled_layers": {
-                        "backend": True,
-                        "router": True,
-                        "pipe": True
-                    },
-                    "exporters": {
-                        "stackdriver": {
-                            "project_id": self.stackdriver_project_id,
-                            "metric_prefix": "krakend",
-                            "default_labels": {
-                                "env": "production"
-                            }
-                        }
-                    }
-                }
-            logging.debug("Added stackdriver configuration")
 
         logging.debug("Loading config")
         config_data = json.dumps(krakend_config, indent=4)

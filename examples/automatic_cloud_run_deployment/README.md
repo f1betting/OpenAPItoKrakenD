@@ -23,11 +23,9 @@ jobs:
 
     steps:
       - name: Convert specs to KrakenD config
-        uses: f1betting/OpenAPItoKrakenD@v1
+        uses: f1betting/OpenAPItoKrakenD@v2
         with:
           input-folder: specs
-          name: "krakend_test_gateway"
-          stackdriver-project-id: ${{secrets.GOOGLE_PROJECT_ID}}
 
   build:
     needs: [ convert ]

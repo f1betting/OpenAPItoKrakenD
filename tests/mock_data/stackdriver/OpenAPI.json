@@ -1,0 +1,850 @@
+{
+  "openapi": "3.0.2",
+  "info": {
+    "title": "F1 BETTING",
+    "description": "An API to do bets with your friends about F1 race results!",
+    "license": {
+      "name": "MIT",
+      "url": "https://github.com/niek-o/F1Betting/blob/main/LICENSE.md"
+    },
+    "version": "1.4.1",
+    "x-logo": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/f/f2/New_era_F1_logo.png"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://f1-betting.app"
+    }
+  ],
+  "paths": {
+    "/users": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Get All Users",
+        "operationId": "get_all_users",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Users"
+                },
+                "example": {
+                  "users": [
+                    {
+                      "username": "Niek",
+                      "uuid": "6f61f594-f318-4c74-8d41-4d7fee3b5024"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Message"
+                },
+                "example": {
+                  "message": "Users not found"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Create User",
+        "operationId": "create_user",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/User"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                },
+                "example": {
+                  "username": "Niek",
+                  "uuid": "6f61f594-f318-4c74-8d41-4d7fee3b5024"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Message"
+                },
+                "example": {
+                  "message": "User already exists"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/{user_id}": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Get User By Id",
+        "operationId": "get_user_by_id",
+        "parameters": [
+          {
+            "required": true,
+            "schema": {
+              "title": "User Id",
+              "type": "string"
+            },
+            "name": "user_id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                },
+                "example": {
+                  "username": "niek",
+                  "uuid": "ac82bc61-67fd-4b84-8057-eac4b999e616",
+                  "points_2022": 19
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Message"
+                },
+                "example": {
+                  "message": "User not found"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/bet/{season}/{race}": {
+      "get": {
+        "tags": [
+          "Bet"
+        ],
+        "summary": "Get Bet",
+        "operationId": "get_bet",
+        "parameters": [
+          {
+            "required": true,
+            "schema": {
+              "title": "Season",
+              "type": "integer"
+            },
+            "name": "season",
+            "in": "path"
+          },
+          {
+            "required": true,
+            "schema": {
+              "title": "Race",
+              "type": "integer"
+            },
+            "name": "race",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FullBet"
+                },
+                "example": {
+                  "uuid": "123712308762698123",
+                  "p1": "RUS",
+                  "p2": "LEC",
+                  "p3": "RUS",
+                  "season": 2022,
+                  "round": 16,
+                  "points": 2
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Message"
+                },
+                "example": {
+                  "message": "User not found"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/bet": {
+      "put": {
+        "tags": [
+          "Bet"
+        ],
+        "summary": "Edit Bet",
+        "operationId": "edit_bet",
+        "parameters": [
+          {
+            "required": true,
+            "schema": {
+              "title": "P1",
+              "type": "string"
+            },
+            "name": "p1",
+            "in": "query"
+          },
+          {
+            "required": true,
+            "schema": {
+              "title": "P2",
+              "type": "string"
+            },
+            "name": "p2",
+            "in": "query"
+          },
+          {
+            "required": true,
+            "schema": {
+              "title": "P3",
+              "type": "string"
+            },
+            "name": "p3",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Message"
+                },
+                "example": {
+                  "message": "Bet updated successfully"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Message"
+                },
+                "example": {
+                  "message": "User not found"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "Bet"
+        ],
+        "summary": "Create Bet",
+        "operationId": "create_bet",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BaseBet"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FullBet"
+                },
+                "example": {
+                  "uuid": "123712308762698123",
+                  "p1": "RUS",
+                  "p2": "LEC",
+                  "p3": "RUS",
+                  "season": 2022,
+                  "round": 16,
+                  "points": 2
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Message"
+                },
+                "example": {
+                  "message": "User not found"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Message"
+                },
+                "example": {
+                  "message": "Bet already exists"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "Bet"
+        ],
+        "summary": "Delete Bet",
+        "operationId": "delete_bet",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Message"
+                },
+                "example": {
+                  "message": "Bet deleted successfully"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Message"
+                },
+                "example": {
+                  "message": "User not found"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/results/race/{season}/{race}": {
+      "get": {
+        "tags": [
+          "Results"
+        ],
+        "summary": "Get All Results For Round",
+        "operationId": "get_all_results_for_round",
+        "parameters": [
+          {
+            "required": true,
+            "schema": {
+              "title": "Season",
+              "type": "integer"
+            },
+            "name": "season",
+            "in": "path"
+          },
+          {
+            "required": true,
+            "schema": {
+              "title": "Race",
+              "type": "integer"
+            },
+            "name": "race",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResults"
+                },
+                "example": {
+                  "results": [
+                    {
+                      "username": "Niek",
+                      "points": 20
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Message"
+                },
+                "example": {
+                  "message": "Users not found"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/results/standings/{season}": {
+      "get": {
+        "tags": [
+          "Results"
+        ],
+        "summary": "Get Standings",
+        "operationId": "get_standings",
+        "parameters": [
+          {
+            "required": true,
+            "schema": {
+              "title": "Season",
+              "type": "integer"
+            },
+            "name": "season",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResults"
+                },
+                "example": {
+                  "results": [
+                    {
+                      "username": "Niek",
+                      "points": 20
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Message"
+                },
+                "example": {
+                  "message": "Users not found"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/seasons": {
+      "get": {
+        "tags": [
+          "Seasons"
+        ],
+        "summary": "Get Seasons",
+        "operationId": "get_seasons",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Seasons"
+                },
+                "example": {
+                  "seasons": [
+                    2022
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Message"
+                },
+                "example": {
+                  "message": "Users not found"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "BaseBet": {
+        "title": "BaseBet",
+        "required": [
+          "p1",
+          "p2",
+          "p3"
+        ],
+        "type": "object",
+        "properties": {
+          "p1": {
+            "title": "P1",
+            "type": "string"
+          },
+          "p2": {
+            "title": "P2",
+            "type": "string"
+          },
+          "p3": {
+            "title": "P3",
+            "type": "string"
+          }
+        }
+      },
+      "FullBet": {
+        "title": "FullBet",
+        "required": [
+          "p1",
+          "p2",
+          "p3",
+          "uuid",
+          "season",
+          "round",
+          "points"
+        ],
+        "type": "object",
+        "properties": {
+          "p1": {
+            "title": "P1",
+            "type": "string"
+          },
+          "p2": {
+            "title": "P2",
+            "type": "string"
+          },
+          "p3": {
+            "title": "P3",
+            "type": "string"
+          },
+          "uuid": {
+            "title": "Uuid",
+            "type": "string"
+          },
+          "season": {
+            "title": "Season",
+            "type": "integer"
+          },
+          "round": {
+            "title": "Round",
+            "type": "integer"
+          },
+          "points": {
+            "title": "Points",
+            "type": "integer"
+          }
+        }
+      },
+      "HTTPValidationError": {
+        "title": "HTTPValidationError",
+        "type": "object",
+        "properties": {
+          "detail": {
+            "title": "Detail",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            }
+          }
+        }
+      },
+      "Message": {
+        "title": "Message",
+        "required": [
+          "message"
+        ],
+        "type": "object",
+        "properties": {
+          "message": {
+            "title": "Message",
+            "type": "string"
+          }
+        }
+      },
+      "Seasons": {
+        "title": "Seasons",
+        "required": [
+          "seasons"
+        ],
+        "type": "object",
+        "properties": {
+          "seasons": {
+            "title": "Seasons",
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          }
+        }
+      },
+      "User": {
+        "title": "User",
+        "required": [
+          "username"
+        ],
+        "type": "object",
+        "properties": {
+          "username": {
+            "title": "Username",
+            "type": "string"
+          },
+          "uuid": {
+            "title": "Uuid",
+            "type": "string"
+          }
+        }
+      },
+      "UserResult": {
+        "title": "UserResult",
+        "required": [
+          "username",
+          "points"
+        ],
+        "type": "object",
+        "properties": {
+          "username": {
+            "title": "Username",
+            "type": "string"
+          },
+          "points": {
+            "title": "Points",
+            "type": "integer"
+          }
+        }
+      },
+      "UserResults": {
+        "title": "UserResults",
+        "required": [
+          "results"
+        ],
+        "type": "object",
+        "properties": {
+          "results": {
+            "title": "Results",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserResult"
+            }
+          }
+        }
+      },
+      "Users": {
+        "title": "Users",
+        "required": [
+          "users"
+        ],
+        "type": "object",
+        "properties": {
+          "users": {
+            "title": "Users",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/User"
+            }
+          }
+        }
+      },
+      "ValidationError": {
+        "title": "ValidationError",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "type": "object",
+        "properties": {
+          "loc": {
+            "title": "Location",
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            }
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "HTTPBearer": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    }
+  }
+}
