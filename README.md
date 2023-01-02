@@ -137,7 +137,7 @@ It's possible to customize the default configuration by adding a ``config`` fold
 it. To view the default configuration files, see the files inside [app/config](app/config).
 
 To view an example of this,
-see [KrakenD Cloud Run service account plugin](examples/krakend-cloud-run-service-account-plugin/README.md)
+see [KrakenD Cloud Run service account plugin](examples/krakend-cloud-run-service-account-plugin)
 
 #### 💾 Configuration files
 
@@ -189,10 +189,10 @@ There are a few configurations options possible. These are the ones that are ava
 #### 💾 Detailed example
 
 For a more detailed example, which automatically deploys the KrakenD gateway to Google Cloud Run,
-see [automatic cloud run deployment](examples/automatic_cloud_run_deployment/README.md).
+see [automatic cloud run deployment](examples/automatic_cloud_run_deployment).
 
 You can find an example using a custom configuration
-in [KrakenD Cloud Run service account plugin](examples/krakend-cloud-run-service-account-plugin/README.md)
+in [KrakenD Cloud Run service account plugin](examples/krakend-cloud-run-service-account-plugin)
 
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
