@@ -38,7 +38,7 @@
         - [👷 Manual versioning](#-manual-versioning)
         - [🚫 No versioning](#-no-versioning)
     - [🧰 Customizing KrakenD configuration](#-customizing-krakend-configuration)
-      - [💾 Configuration files](#-configuration-files)
+        - [💾 Configuration files](#-configuration-files)
     - [🎬 Using in GitHub Actions](#-using-in-github-actions)
         - [📝 Configuration](#-configuration)
         - [💾 Detailed example](#-detailed-example)
@@ -181,10 +181,10 @@ jobs:
 
 There are a few configurations options possible. These are the ones that are available to use:
 
-| Name                   | Required | Description                                                    |
-|------------------------|----------|----------------------------------------------------------------|
-| input-folder           | Yes      | The input folder that contains the OpenAPI specs               |
-| disable-versioning     | No       | Disable automatic versioning based on OpenAPI specifications   |
+| Name               | Required | Description                                                                              |
+|--------------------|----------|------------------------------------------------------------------------------------------|
+| input-folder       | Yes      | The input folder that contains the OpenAPI specs and optional custom configuration files |
+| disable-versioning | No       | Disable automatic versioning based on OpenAPI specifications                             |
 
 #### 💾 Detailed example
 
