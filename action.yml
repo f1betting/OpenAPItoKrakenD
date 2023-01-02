@@ -5,13 +5,7 @@ description: Run the mockserver for F1Betting
 inputs:
   input-folder:
     required: true
-    description: The input folder that contains the OpenAPI specs
-  name:
-    required: false
-    description: The KrakenD API gateway name
-  stackdriver-project-id:
-    required: false
-    description: The Google project-id where Stackdriver logging is enabled for
+    description: The input folder that contains the OpenAPI specs and optional custom configuration
   disable-versioning:
     required: false
     description: Disable automatic versioning based on OpenAPI specifications
@@ -38,13 +32,9 @@ runs:
         export PYTHONPATH=${{ github.action_path }}
         
         echo "python -m app.main ${{inputs.input-folder}} output \
-          $(if [ -n "${{inputs.name}}" ]; then echo " --name ${{inputs.name}}"; fi) \
-          $(if [ -n "${{inputs.stackdriver-project-id}}" ]; then echo " --stackdriver-project-id ${{inputs.stackdriver-project-id}}"; fi) \
           $(if [ -n "${{inputs.disable-versioning}}" ]; then echo " --disable-automatic-versioning"; fi)"
         
         python -m app.main ${{inputs.input-folder}} output \
-          $(if [ -n "${{inputs.name}}" ]; then echo " --name ${{inputs.name}}"; fi) \
-          $(if [ -n "${{inputs.stackdriver-project-id}}" ]; then echo " --stackdriver-project-id ${{inputs.stackdriver-project-id}}"; fi) \
           $(if [ -n "${{inputs.disable-versioning}}" ]; then echo " --disable-automatic-versioning"; fi)
 
     - name: Upload output as artifact
