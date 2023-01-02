@@ -14,4 +14,6 @@ RUN krakend check -c /tmp/krakend.json --lint
 # Add the built configuration file to the final Docker image
 FROM devopsfaith/krakend:2.1.3
 
+COPY /config/plugins /etc/krakend/config/plugins
+
 COPY --from=builder --chown=krakend:root /tmp/krakend.json .

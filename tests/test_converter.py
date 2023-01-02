@@ -382,10 +382,47 @@ RUN FC_ENABLE=1 \\
 
 RUN krakend check -c /tmp/krakend.json --lint
 
-# Add the built configuration file to the final Docker image 
+# Add the built configuration file to the final Docker image
 FROM devopsfaith/krakend:2.1.3
 
+COPY --from=builder --chown=krakend:root /tmp/krakend.json ."""
+
+        self.assertEqual(dockerfile_string, dockerfile_template)
+
+    def test_custom_dockerfile(self):
+        """
+        Test if the custom dockerfile is made correctly
+        """
+        converter = OpenAPIToKrakenD(logging_mode=logging.ERROR,
+                                     input_folder_path="tests/mock_data/custom_dockerfile/",
+                                     output_folder_path="tests/output")
+        converter.convert()
+
+        with open("tests/output/Dockerfile", "r", encoding="utf-8") as dockerfile:
+            dockerfile_string = dockerfile.read()
+
+        dockerfile_template = """# Build KrakenD configuration file
+FROM devopsfaith/krakend:2.1.3 as builder
+
+COPY /config /etc/krakend/config
+
+RUN FC_ENABLE=1 \\
+    FC_OUT=/tmp/krakend.json \\
+    FC_SETTINGS="config/settings" \\
+    FC_TEMPLATES="config/templates" \\
+    krakend check -t -d -c "config/krakend.json"
+
+RUN krakend check -c /tmp/krakend.json --lint
+
+# Add the built configuration file to the final Docker image
+FROM devopsfaith/krakend:2.1.3
+
+COPY /config/plugins /etc/krakend/config/plugins
+COPY /config/credentials.json /etc/krakend/config/
+
 COPY --from=builder --chown=krakend /tmp/krakend.json .
+
+ENV GOOGLE_APPLICATION_CREDENTIALS="/etc/krakend/config/credentials.json"
 """
 
         self.assertEqual(dockerfile_string, dockerfile_template)

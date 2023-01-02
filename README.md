@@ -37,6 +37,8 @@
         - [🤖 Automatic versioning](#-automatic-versioning)
         - [👷 Manual versioning](#-manual-versioning)
         - [🚫 No versioning](#-no-versioning)
+    - [🧰 Customizing KrakenD configuration](#-customizing-krakend-configuration)
+      - [💾 Configuration files](#-configuration-files)
     - [🎬 Using in GitHub Actions](#-using-in-github-actions)
         - [📝 Configuration](#-configuration)
         - [💾 Detailed example](#-detailed-example)
@@ -134,14 +136,19 @@ OpenAPI name, it will create a version.
 It's possible to customize the default configuration by adding a ``config`` folder with the configuration files inside
 it. To view the default configuration files, see the files inside [app/config](app/config).
 
+To view an example of this,
+see [KrakenD Cloud Run service account plugin](examples/krakend-cloud-run-service-account-plugin/README.md)
+
 #### 💾 Configuration files
+
 Below are the configuration files that you can use to configure KrakenD to your liking.
 
-| File          | Function                                                                                                                                          |
-|---------------|---------------------------------------------------------------------------------------------------------------------------------------------------|
-| backend.json  | The configuration for the ``backend`` section in an endpoint. _See [Declaring and connecting to backends](https://www.krakend.io/docs/backends/)_ |
-| endpoint.json | The configuration for the ``endpoint`` section in an endpoint file. _See [Creating API endpoints](https://www.krakend.io/docs/endpoints/)_        |
-| krakend.json  | The general KrakenD configuration. Refer to the [KrakenD docs](https://www.krakend.io/docs/) for more information.                                |
+| File          | Function                                                                                                                                                 |
+|---------------|----------------------------------------------------------------------------------------------------------------------------------------------------------|
+| backend.json  | The configuration for the ``backend`` section in an endpoint. _See [Declaring and connecting to backends](https://www.krakend.io/docs/backends/)_        |
+| endpoint.json | The configuration for the ``endpoint`` section in an endpoint file. _See [Creating API endpoints](https://www.krakend.io/docs/endpoints/)_               |
+| krakend.json  | The general KrakenD configuration. Refer to the [KrakenD docs](https://www.krakend.io/docs/) for more information.                                       |
+| Dockerfile    | The Dockerfile to build a Docker image of the final KrakenD gateway. _See [Generating a Docker artifact](https://www.krakend.io/docs/deploying/docker/)_ |
 
 ### 🎬 Using in GitHub Actions
 
@@ -183,6 +190,10 @@ There are a few configurations options possible. These are the ones that are ava
 
 For a more detailed example, which automatically deploys the KrakenD gateway to Google Cloud Run,
 see [automatic cloud run deployment](examples/automatic_cloud_run_deployment/README.md).
+
+You can find an example using a custom configuration
+in [KrakenD Cloud Run service account plugin](examples/krakend-cloud-run-service-account-plugin/README.md)
+
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 

@@ -1,0 +1,11 @@
+{
+  "encoding": "no-op",
+  "disable_host_sanitize": false,
+  "extra_config": {
+    "plugin/req-resp-modifier": {
+      "name": [
+        "cloud-run-service-account"
+      ]
+    }
+  }
+}

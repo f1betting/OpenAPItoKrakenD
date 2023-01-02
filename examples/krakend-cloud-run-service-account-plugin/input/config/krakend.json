@@ -1,0 +1,69 @@
+{
+  "version": 3,
+  "name": "gateway-test",
+  "cache_ttl": "3600s",
+  "timeout": "45s",
+  "extra_config": {
+    "security/cors": {
+      "allow_origins": [
+        "http*"
+      ],
+      "allow_methods": [
+        "GET",
+        "HEAD",
+        "POST",
+        "PUT",
+        "DELETE",
+        "OPTIONS"
+      ],
+      "expose_headers": [
+        "Content-Length",
+        "Content-Type"
+      ],
+      "allow_headers": [
+        "Content-Type",
+        "Accept-Language",
+        "Origin",
+        "Authorization"
+      ],
+      "max_age": "12h",
+      "allow_credentials": true,
+      "debug": true
+    },
+    "router": {
+      "logger_skip_paths": [
+        "/__health"
+      ],
+      "disable_access_log": true
+    },
+    "telemetry/logging": {
+      "level": "INFO",
+      "prefix": "[KRAKEND]",
+      "syslog": true,
+      "stdout": true,
+      "format": "logstash"
+    },
+    "telemetry/opencensus": {
+      "sample_rate": 100,
+      "reporting_period": 60,
+      "enabled_layers": {
+        "backend": true,
+        "router": true,
+        "pipe": true
+      },
+      "exporters": {
+        "stackdriver": {
+          "project_id": "gateway-test",
+          "metric_prefix": "krakend",
+          "default_labels": {
+            "env": "production"
+          }
+        }
+      }
+    }
+  },
+  "plugin": {
+    "pattern": ".so",
+    "folder": "/etc/krakend/config/plugins/"
+  }
+}
