@@ -9,6 +9,7 @@ from tests.logic.test_setup_logic import delete_output_folder, create_output_fol
 
 
 # pylint:disable=duplicate-code
+# pylint:disable=too-many-public-methods
 
 class TestConverter(unittest.TestCase):
     """
