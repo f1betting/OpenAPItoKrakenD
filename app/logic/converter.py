@@ -5,6 +5,7 @@ import json
 import logging
 import os
 import re
+import shutil
 
 
 class OpenAPIToKrakenD:
@@ -20,7 +21,7 @@ class OpenAPIToKrakenD:
         logging.basicConfig(level=logging_mode, format="[%(levelname)s]: %(message)s")  # NOSONAR
 
         self.paths: list = glob.glob(f"{input_folder_path}/*.json")
-        self.config_paths: list = glob.glob(f"{input_folder_path}/config/*.json")
+        self.config_paths: list = glob.glob(f"{input_folder_path}/config/*")
         self.files: list = []
         self.config_files: list = []
         self.input_folder_path: str = input_folder_path
@@ -194,29 +195,14 @@ class OpenAPIToKrakenD:
 
     def __write_dockerfile(self):
         """
-        Write the dockerfile
+        Copy the dockerfile
         """
-        data = """# Build KrakenD configuration file
-FROM devopsfaith/krakend:2.1.3 as builder
-
-COPY /config /etc/krakend/config
-
-RUN FC_ENABLE=1 \\
-    FC_OUT=/tmp/krakend.json \\
-    FC_SETTINGS="config/settings" \\
-    FC_TEMPLATES="config/templates" \\
-    krakend check -t -d -c "config/krakend.json"
-
-RUN krakend check -c /tmp/krakend.json --lint
-
-# Add the built configuration file to the final Docker image 
-FROM devopsfaith/krakend:2.1.3
-
-COPY --from=builder --chown=krakend /tmp/krakend.json .
-"""
-
-        with open(f"{self.output_folder_path}/Dockerfile", "w+", encoding="utf-8") as dockerfile:
-            dockerfile.write(data)
+        if "Dockerfile" in self.config_files:
+            logging.debug("Using custom Dockerfile")
+            shutil.copy(f"{self.input_folder_path}/config/Dockerfile", f"{self.output_folder_path}")
+        else:
+            logging.debug("Using default Dockerfile")
+            shutil.copy("app/config/Dockerfile", f"{self.output_folder_path}")
 
     def __write_endpoints_template(self):
         """
