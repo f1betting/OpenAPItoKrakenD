@@ -7,6 +7,8 @@ import os
 import re
 import shutil
 
+from app.utils.errors import InvalidOpenAPIError, OpenAPIFileNotFoundError
+
 
 class OpenAPIToKrakenD:
     """
@@ -37,8 +39,7 @@ class OpenAPIToKrakenD:
             self.files.append(os.path.basename(path))
 
         if len(self.paths) <= 0:
-            logging.error(f"No files found in '{self.input_folder_path}'")
-            raise FileNotFoundError
+            raise OpenAPIFileNotFoundError(f"No files found in '{self.input_folder_path}'")
 
         if len(self.config_paths) > 0:
             logging.info("Using custom configuration files")
@@ -140,17 +141,30 @@ class OpenAPIToKrakenD:
         """
         Get the correct security headers for the security scheme
         """
-        header = None
 
-        if security_scheme["type"] == "http" \
-                and security_scheme["scheme"] == "bearer":
-            logging.debug("Bearer Authentication schema found")
+        match security_scheme["type"]:
+            case "http" if security_scheme["scheme"] == "bearer":
+                logging.debug("Bearer Authentication schema found")
 
-            logging.debug("Setting security header to 'Authorization'")
-            header = "Authorization"
-            logging.debug("Set security header to 'Authorization'")
+                logging.debug("Setting security header to 'Authorization'")
+                return "Authorization"
+            case "http" if security_scheme["scheme"] == "basic":
+                logging.debug("Basic Authentication schema found")
 
-        return header
+                logging.debug("Setting security header to 'Authorization'")
+                return "Authorization"
+            case "apiKey" if security_scheme["in"] == "header":
+                logging.debug("API Key Header authentication schema found")
+
+                logging.debug(f"Setting security header to '{security_scheme['name']}'")
+                return security_scheme["name"]
+            case "oauth2" if "implicit" in security_scheme["flows"]:
+                logging.debug("OAuth2 Implicit Authentication schema found")
+
+                logging.debug("Setting security header to 'Authorization'")
+                return "Authorization"
+            case _:
+                return None
 
     def __get_name_with_version(self, filename, data):
         name = filename.upper()[:-5]
@@ -173,6 +187,7 @@ class OpenAPIToKrakenD:
         """
         Verify if the OpenAPI files contain all the required fields
         """
+
         with open(f"{self.input_folder_path}/{file}", "r", encoding="utf-8") as openapi_file:
             data: dict = json.load(openapi_file)
 
@@ -181,17 +196,14 @@ class OpenAPIToKrakenD:
             if "servers" in data.keys() and len(data["servers"]) >= 1 and "url" in data["servers"][0]:
                 server = data["servers"][0]["url"]
                 if "http://" not in server and "https://" not in server:  # NOSONAR
-                    logging.error(f"{file}: invalid server")
-                    raise ValueError
+                    raise InvalidOpenAPIError(f"{file}: invalid server")
             else:
-                logging.error(f"{file}: no servers defined")
-                raise ValueError
+                raise InvalidOpenAPIError(f"{file}: no servers defined")
 
             logging.debug("Verifying version")
 
             if "info" not in data.keys() or "version" not in data["info"].keys():
-                logging.error("No version found")
-                raise ValueError
+                raise InvalidOpenAPIError("No version found")
 
     def __write_dockerfile(self):
         """
@@ -348,20 +360,19 @@ class OpenAPIToKrakenD:
             define = f'{{{{define "{api_define}"}}}}\n\n'
             prefix = f'{{{{$prefix := "/{api_prefix}"}}}}\n\n'
 
+            openapi_security_schemes = None
+
+            if "components" in data and "securitySchemes" in data["components"]:
+                logging.debug("Security schemes found in OpenAPI")
+                openapi_security_schemes = data["components"]["securitySchemes"]
+
             for path in data["paths"]:
                 logging.info(f"Starting conversion for {path}")
 
                 for method in data["paths"][path]:
                     logging.info(f"Preparing conversion for {path}: {method}")
 
-                    security_schemes = None
-                    if "components" in data and "securitySchemes" in data["components"]:
-                        security_schemes = data["components"]["securitySchemes"]
-                        logging.debug("Security schemes found")
-                    else:
-                        logging.debug("No security schemes found")
-
-                    headers = self.__get_headers(data["paths"][path][method], security_schemes)
+                    headers = self.__get_headers(data["paths"][path][method], openapi_security_schemes)
 
                     logging.info(f"Converting {path}: {method}")
                     krakend_endpoint = self.__new_endpoint(path, method.upper(), headers)
@@ -424,15 +435,21 @@ class OpenAPIToKrakenD:
         Add the security headers
         """
         headers = []
-        security = endpoint["security"]
-        schemes = list(security_schemes.keys())
 
-        for method in security:
-            for scheme in schemes:
-                if scheme in method:
-                    logging.debug(f"Adding {scheme}")
-                    headers.append(self.__get_security_headers(security_schemes[scheme]))
-                    logging.debug(f"Added {scheme}")
+        schemes = [list(item.keys())[0] for item in [scheme for scheme in endpoint["security"]]]
+
+        for scheme in schemes:
+            if scheme not in security_schemes:
+                raise InvalidOpenAPIError(f"{scheme} does not exist in OpenAPI specification")
+
+            logging.debug(f"Adding header for components.securitySchemes.{scheme}")
+            header = self.__get_security_headers(security_schemes[scheme])
+            if header in headers:
+                raise InvalidOpenAPIError(f"Header '{header}' already exists")
+
+            headers.append(header)
+
+            logging.debug(f"Added header for components.securitySchemes.{scheme}")
 
         return headers
 
