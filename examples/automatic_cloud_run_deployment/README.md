@@ -25,7 +25,7 @@ jobs:
       - name: Convert specs to KrakenD config
         uses: f1betting/OpenAPItoKrakenD@v2
         with:
-          input-folder: specs
+          input-folder: input
 
   build:
     needs: [ convert ]
@@ -38,7 +38,7 @@ jobs:
       - uses: 'actions/checkout@v3'
 
       - name: Download KrakenD configuration
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: krakend-config
 
@@ -51,7 +51,7 @@ jobs:
         uses: 'google-github-actions/setup-gcloud@v1'
 
       - name: 'Build docker-image and submit to GCR'
-        run: 'gcloud builds submit --tag eu.gcr.io/${{secrets.GOOGLE_PROJECT_ID}}/${{secrets.GOOGLE_SERVICE_NAME}} . --timeout 3600'
+        run: 'gcloud builds submit --tag gcr.io/${{secrets.GOOGLE_PROJECT_ID}}/${{secrets.GOOGLE_SERVICE_NAME}} . --timeout 3600'
 
   deploy:
     needs: [ convert, build ]
@@ -71,7 +71,7 @@ jobs:
       - name: Deploy to Google Cloud Run
         uses: 'google-github-actions/deploy-cloudrun@v1'
         with:
-          image: eu.gcr.io/${{secrets.GOOGLE_PROJECT_ID}}/${{secrets.GOOGLE_SERVICE_NAME}}
+          image: gcr.io/${{secrets.GOOGLE_PROJECT_ID}}/${{secrets.GOOGLE_SERVICE_NAME}}
           service: ${{secrets.GOOGLE_SERVICE_NAME}}
           region: europe-west1
 ````

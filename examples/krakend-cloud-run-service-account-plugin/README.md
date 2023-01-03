@@ -1,6 +1,8 @@
 ## KrakenD Cloud Run service account
 
-The action example in this folder automatically deploys the KrakenD gateway to Google Cloud Run with the [krakend-cloud-run-service-account](https://github.com/f1betting/krakend-cloud-run-service-account) plugin. This is done with
+The action example in this folder automatically deploys the KrakenD gateway to Google Cloud Run with
+the [krakend-cloud-run-service-account](https://github.com/f1betting/krakend-cloud-run-service-account) plugin. This is
+done with
 secrets of the action's repository.
 
 The input folder contains the custom configuration files and an example OpenAPI specification.
@@ -14,14 +16,11 @@ The input folder contains the custom configuration files and an example OpenAPI 
 | GOOGLE_SERVICE_NAME        | The name of the Cloud Run service you wish to deploy to                                                                                                |
 
 ### The action
+
 ````yaml
 name: Convert Specs to KrakenD config
 
-on:
-  push:
-    branches:
-      - main
-  workflow_dispatch:
+on: workflow_dispatch
 
 jobs:
   convert:
@@ -44,7 +43,7 @@ jobs:
       - uses: 'actions/checkout@v3'
 
       - name: Download KrakenD configuration
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: krakend-config
 
@@ -54,13 +53,7 @@ jobs:
           repository: "f1betting/krakend-cloud-run-service-account"
           latest: true
           fileName: "cloud-run-service-account.so"
-
-      - name: Copy plugin to correct directory
-        shell: bash
-        run: |
-          mkdir -p ./config
-          mkdir -p ./config/plugins
-          cp ./cloud-run-service-account.so ./config/plugins/
+          out-file-path: "./config/plugins"
 
       - name: Authenticate Google SDK
         uses: 'google-github-actions/auth@v1'

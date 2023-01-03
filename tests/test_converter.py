@@ -5,6 +5,7 @@ import re
 import unittest
 
 from app.logic.converter import OpenAPIToKrakenD
+from app.utils.errors import InvalidOpenAPIError, OpenAPIFileNotFoundError
 from tests.logic.test_setup_logic import delete_output_folder, create_output_folder
 
 
@@ -77,62 +78,62 @@ class TestConverter(unittest.TestCase):
 
     def test_no_server(self):
         """
-        Test if a ValueError is thrown if there is no server field in the OpenAPI spec
+        Test if a InvalidOpenAPIError is thrown if there is no server field in the OpenAPI spec
         """
         converter = OpenAPIToKrakenD(logging_mode=logging.ERROR,
                                      input_folder_path="tests/mock_data/no_server/",
                                      output_folder_path="tests/output")
 
         # Test if a KeyError is thrown if there is no server field in the OpenAPI spec
-        with self.assertRaises(ValueError):
+        with self.assertRaises(InvalidOpenAPIError):
             converter.convert()
 
     def test_no_info_field(self):
         """
-        Test if a ValueError is thrown if there is no info field in the OpenAPI spec
+        Test if a InvalidOpenAPIError is thrown if there is no info field in the OpenAPI spec
         """
         converter = OpenAPIToKrakenD(logging_mode=logging.ERROR,
                                      input_folder_path="tests/mock_data/no_info/",
                                      output_folder_path="tests/output")
 
-        # Test if a ValueError is thrown if there is no info field in the OpenAPI spec
-        with self.assertRaises(ValueError):
+        # Test if a InvalidOpenAPIError is thrown if there is no info field in the OpenAPI spec
+        with self.assertRaises(InvalidOpenAPIError):
             converter.convert()
 
     def test_no_version_field(self):
         """
-        Test if a ValueError is thrown if there is no version field in the OpenAPI spec
+        Test if a InvalidOpenAPIError is thrown if there is no version field in the OpenAPI spec
         """
         converter = OpenAPIToKrakenD(logging_mode=logging.ERROR,
                                      input_folder_path="tests/mock_data/no_version/",
                                      output_folder_path="tests/output")
 
-        # Test if a ValueError is thrown if there is no version field in the OpenAPI spec
-        with self.assertRaises(ValueError):
+        # Test if a InvalidOpenAPIError is thrown if there is no version field in the OpenAPI spec
+        with self.assertRaises(InvalidOpenAPIError):
             converter.convert()
 
     def test_invalid_server(self):
         """
-        Test if an ValueError is thrown if there is no valid server in the server field
+        Test if an InvalidOpenAPIError is thrown if there is no valid server in the server field
         """
         converter = OpenAPIToKrakenD(logging_mode=logging.ERROR,
                                      input_folder_path="tests/mock_data/invalid_server/",
                                      output_folder_path="tests/output")
 
-        # Test if an ValueError is thrown if there is no valid server in the server field
-        with self.assertRaises(ValueError):
+        # Test if an InvalidOpenAPIError is thrown if there is no valid server in the server field
+        with self.assertRaises(InvalidOpenAPIError):
             converter.convert()
 
     def test_empty_folder(self):
         """
-        Test if a folder with no JSON files raises a FileNotFoundError
+        Test if a folder with no JSON files raises a OpenAPIFileNotFoundError
         """
         converter = OpenAPIToKrakenD(logging_mode=logging.ERROR,
                                      input_folder_path="tests/mock_data/empty_folder/",
                                      output_folder_path="tests/output")
 
-        # Test if a folder with no JSON files raises a FileNotFoundError
-        with self.assertRaises(FileNotFoundError):
+        # Test if a folder with no JSON files raises a OpenAPIFileNotFoundError
+        with self.assertRaises(OpenAPIFileNotFoundError):
             converter.convert()
 
     def test_security_header_on_endpoint(self):
@@ -196,31 +197,16 @@ class TestConverter(unittest.TestCase):
 
     def test_wrong_security_headers(self):
         """
-        Test if /bet/{season}/{race} does not contain the Authorization header
-        (Security scheme is named different from the one in the header, therefore it should not add it)
+        Test if an InvalidOpenAPIError is being raised when the security scheme is named different from the one in
+        the header
         """
         converter = OpenAPIToKrakenD(logging_mode=logging.ERROR,
                                      input_folder_path="tests/mock_data/wrong_security_scheme/",
                                      output_folder_path="tests/output")
-        converter.convert()
 
-        with open("tests/output/config/templates/OPENAPI.tmpl", "r", encoding="utf-8") as template_file:
-            template = template_file.read()
-
-        # Remove templating
-        config_data = re.sub(r"^({{(.*?)}})", "", template, flags=re.M).strip()
-
-        # Split objects
-        endpoints_data = re.split(r"(?<=}),", config_data, flags=re.M)
-
-        endpoints = []
-
-        # Load JSON to array
-        for endpoint in endpoints_data:
-            endpoints.append(json.loads(endpoint))
-
-        # Test if /bet/{season}/{race} does not contain the Authorization header
-        self.assertFalse("Authorization" in endpoints[3]["input_headers"])
+        # Test if a folder with no JSON files raises a InvalidOpenAPIError
+        with self.assertRaises(InvalidOpenAPIError):
+            converter.convert()
 
     def test_header_parameter_on_endpoint(self):
         """

@@ -6,9 +6,9 @@
   <p align="center">
     A tool to batch-convert OpenAPI 3.0 files to a flexible KrakenD configuration
     <br />
-    <a href="https://github.com/niek-o/OpenAPItoKrakenD/issues">Report Bug</a>
+    <a href="https://github.com/f1betting/OpenAPItoKrakenD/issues">Report Bug</a>
     ·
-    <a href="https://github.com/OpenAPItoKrakenD/issues">Request Feature</a>
+    <a href="https://github.com/f1betting/OpenAPItoKrakenD/issues">Request Feature</a>
     <br />
     <br />
     <img alt="GitHub Latest Version" src="https://img.shields.io/github/v/release/f1betting/OpenAPItoKrakenD?label=Latest%20release&style=flat">

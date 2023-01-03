@@ -4,8 +4,9 @@ from typing import Optional
 import typer
 
 from app.logic.converter import OpenAPIToKrakenD
+from app.utils.errors import OpenAPIFileNotFoundError, InvalidOpenAPIError
 
-app = typer.Typer()
+app = typer.Typer(pretty_exceptions_short=True, pretty_exceptions_show_locals=False)
 
 
 @app.command()
@@ -29,4 +30,7 @@ def main(input_folder: str = typer.Argument(..., help="Input folder that contain
 
 
 if __name__ == "__main__":  # pragma: no coverage
-    typer.run(main)
+    try:
+        app()
+    except (OpenAPIFileNotFoundError, InvalidOpenAPIError) as e:
+        logging.getLogger().error(e)
