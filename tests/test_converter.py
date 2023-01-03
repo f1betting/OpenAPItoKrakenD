@@ -136,7 +136,7 @@ class TestConverter(unittest.TestCase):
         with self.assertRaises(OpenAPIFileNotFoundError):
             converter.convert()
 
-    def test_security_header_on_endpoint(self):
+    def test_http_bearer_security_header_on_endpoint(self):
         """
         Test if /bet/{season}/{race} contains the Authorization header
         Test if /users does not contain the Authorization header
@@ -154,6 +154,68 @@ class TestConverter(unittest.TestCase):
 
         # Split objects
         endpoints_data = re.split(r"(?<=}),", config_data, flags=re.M)
+
+        endpoints = []
+
+        # Load JSON to array
+        for endpoint in endpoints_data:
+            endpoints.append(json.loads(endpoint))
+
+        # Test if /bet/{season}/{race} contains the Authorization header
+        self.assertTrue("Authorization" in endpoints[3]["input_headers"])
+
+        # Test if /users does not contain the Authorization header
+        self.assertFalse("Authorization" in endpoints[0]["input_headers"])
+
+    def test_http_basic_security_header_on_endpoint(self):
+        """
+        Test if /bet/{season}/{race} contains the Authorization header
+        Test if /users does not contain the Authorization header
+        """
+        converter = OpenAPIToKrakenD(logging_mode=logging.ERROR,
+                                     input_folder_path="tests/mock_data/http_basic/",
+                                     output_folder_path="tests/output")
+        converter.convert()
+
+        with open("tests/output/config/templates/OPENAPI.tmpl", "r", encoding="utf-8") as template_file:
+            template = template_file.read()
+
+        # Remove templating
+        config_data = re.sub(r"^({{(.*?)}})", "", template, flags=re.M).strip()
+
+        # Split objects
+        endpoints_data = re.split(r"(?<=}),", config_data, flags=re.M)
+
+        endpoints = []
+
+        # Load JSON to array
+        for endpoint in endpoints_data:
+            endpoints.append(json.loads(endpoint))
+
+        # Test if /bet/{season}/{race} contains the Authorization header
+        self.assertTrue("Authorization" in endpoints[3]["input_headers"])
+
+        # Test if /users does not contain the Authorization header
+        self.assertFalse("Authorization" in endpoints[0]["input_headers"])
+
+    def test_oauth2_security_header_on_endpoint(self):
+        """
+        Test if /bet/{season}/{race} contains the Authorization header
+        Test if /users does not contain the Authorization header
+        """
+        converter = OpenAPIToKrakenD(logging_mode=logging.ERROR,
+                                     input_folder_path="tests/mock_data/oauth2/",
+                                     output_folder_path="tests/output")
+        converter.convert()
+
+        with open("tests/output/config/templates/OPENAPI.tmpl", "r", encoding="utf-8") as template_file:
+            template = template_file.read()
+
+        # Remove templating
+        config_data = re.sub(r"^({{(.*?)}})", "", template, flags=re.M).strip()
+
+        # Split objects
+        endpoints_data = re.split(r"(?<=\n}),", config_data, flags=re.M)
 
         endpoints = []
 
@@ -202,6 +264,19 @@ class TestConverter(unittest.TestCase):
         """
         converter = OpenAPIToKrakenD(logging_mode=logging.ERROR,
                                      input_folder_path="tests/mock_data/wrong_security_scheme/",
+                                     output_folder_path="tests/output")
+
+        # Test if a folder with no JSON files raises a InvalidOpenAPIError
+        with self.assertRaises(InvalidOpenAPIError):
+            converter.convert()
+
+    def test_duplicate_security_headers(self):
+        """
+        Test if an InvalidOpenAPIError is being raised when two security schemes have the same header on the same
+        endpoint
+        """
+        converter = OpenAPIToKrakenD(logging_mode=logging.ERROR,
+                                     input_folder_path="tests/mock_data/duplicate_security_headers/",
                                      output_folder_path="tests/output")
 
         # Test if a folder with no JSON files raises a InvalidOpenAPIError

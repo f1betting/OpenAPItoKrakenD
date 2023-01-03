@@ -445,8 +445,7 @@ class OpenAPIToKrakenD:
             logging.debug(f"Adding header for components.securitySchemes.{scheme}")
             header = self.__get_security_headers(security_schemes[scheme])
             if header in headers:
-                logging.warning(f"Header '{header}' already exists, skipping")
-                continue
+                raise InvalidOpenAPIError(f"Header '{header}' already exists")
 
             headers.append(header)
 
