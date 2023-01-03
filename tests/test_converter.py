@@ -229,6 +229,33 @@ class TestConverter(unittest.TestCase):
         # Test if /users does not contain the Authorization header
         self.assertFalse("Authorization" in endpoints[0]["input_headers"])
 
+    def test_oauth2_not_implicit_security_header_on_endpoint(self):
+        """
+        Test if /bet/{season}/{race} does not contain the Authorization header
+        """
+        converter = OpenAPIToKrakenD(logging_mode=logging.ERROR,
+                                     input_folder_path="tests/mock_data/oauth2_not_implicit/",
+                                     output_folder_path="tests/output")
+        converter.convert()
+
+        with open("tests/output/config/templates/OPENAPI.tmpl", "r", encoding="utf-8") as template_file:
+            template = template_file.read()
+
+        # Remove templating
+        config_data = re.sub(r"^({{(.*?)}})", "", template, flags=re.M).strip()
+
+        # Split objects
+        endpoints_data = re.split(r"(?<=\n}),", config_data, flags=re.M)
+
+        endpoints = []
+
+        # Load JSON to array
+        for endpoint in endpoints_data:
+            endpoints.append(json.loads(endpoint))
+
+        # Test if /bet/{season}/{race} does not contain the Authorization header
+        self.assertFalse("Authorization" in endpoints[3]["input_headers"])
+
     def test_no_security_headers(self):
         """
         Test if /bet/{season}/{race} does not contain the Authorization header
