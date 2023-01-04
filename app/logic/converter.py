@@ -149,13 +149,8 @@ class OpenAPIToKrakenD:
         Get the correct security headers for the security scheme.
         """
         match security_scheme["type"]:
-            case "http" if security_scheme["scheme"] == "bearer":
-                logging.debug("Bearer Authentication schema found")
-
-                logging.debug("Setting security header to 'Authorization'")
-                return "Authorization"
-            case "http" if security_scheme["scheme"] == "basic":
-                logging.debug("Basic Authentication schema found")
+            case "http":
+                logging.debug("HTTP authentication schema found")
 
                 logging.debug("Setting security header to 'Authorization'")
                 return "Authorization"
