@@ -153,7 +153,9 @@ class TestConverter(unittest.TestCase):
         config_data = re.sub(r"^({{(.*?)}})", "", template, flags=re.M).strip()
 
         # Split objects
-        endpoints_data = re.split(r"(?<=}),", config_data, flags=re.M)
+        # "(?<=}),\n" selects all the commas (",") after a closing curly bracket ("}") that prepend a newline ("\n")
+        # "^(?!\s)" matches all the spaces after the newline and removes them from the match
+        endpoints_data = re.split(r"(?<=}),\n^(?!\s)", config_data, flags=re.M)
 
         endpoints = []
 
@@ -184,7 +186,9 @@ class TestConverter(unittest.TestCase):
         config_data = re.sub(r"^({{(.*?)}})", "", template, flags=re.M).strip()
 
         # Split objects
-        endpoints_data = re.split(r"(?<=}),", config_data, flags=re.M)
+        # "(?<=}),\n" selects all the commas (",") after a closing curly bracket ("}") that prepend a newline ("\n")
+        # "^(?!\s)" matches all the spaces after the newline and removes them from the match
+        endpoints_data = re.split(r"(?<=}),\n^(?!\s)", config_data, flags=re.M)
 
         endpoints = []
 
@@ -215,7 +219,9 @@ class TestConverter(unittest.TestCase):
         config_data = re.sub(r"^({{(.*?)}})", "", template, flags=re.M).strip()
 
         # Split objects
-        endpoints_data = re.split(r"(?<=\n}),", config_data, flags=re.M)
+        # "(?<=}),\n" selects all the commas (",") after a closing curly bracket ("}") that prepend a newline ("\n")
+        # "^(?!\s)" matches all the spaces after the newline and removes them from the match
+        endpoints_data = re.split(r"(?<=}),\n^(?!\s)", config_data, flags=re.M)
 
         endpoints = []
 
@@ -245,7 +251,9 @@ class TestConverter(unittest.TestCase):
         config_data = re.sub(r"^({{(.*?)}})", "", template, flags=re.M).strip()
 
         # Split objects
-        endpoints_data = re.split(r"(?<=\n}),", config_data, flags=re.M)
+        # "(?<=}),\n" selects all the commas (",") after a closing curly bracket ("}") that prepend a newline ("\n")
+        # "^(?!\s)" matches all the spaces after the newline and removes them from the match
+        endpoints_data = re.split(r"(?<=}),\n^(?!\s)", config_data, flags=re.M)
 
         endpoints = []
 
@@ -273,7 +281,9 @@ class TestConverter(unittest.TestCase):
         config_data = re.sub(r"^({{(.*?)}})", "", template, flags=re.M).strip()
 
         # Split objects
-        endpoints_data = re.split(r"(?<=}),", config_data, flags=re.M)
+        # "(?<=}),\n" selects all the commas (",") after a closing curly bracket ("}") that prepend a newline ("\n")
+        # "^(?!\s)" matches all the spaces after the newline and removes them from the match
+        endpoints_data = re.split(r"(?<=}),\n^(?!\s)", config_data, flags=re.M)
 
         endpoints = []
 
@@ -326,7 +336,9 @@ class TestConverter(unittest.TestCase):
         config_data = re.sub(r"^({{(.*?)}})", "", template, flags=re.M).strip()
 
         # Split objects
-        endpoints_data = re.split(r"(?<=}),", config_data, flags=re.M)
+        # "(?<=}),\n" selects all the commas (",") after a closing curly bracket ("}") that prepend a newline ("\n")
+        # "^(?!\s)" matches all the spaces after the newline and removes them from the match
+        endpoints_data = re.split(r"(?<=}),\n^(?!\s)", config_data, flags=re.M)
 
         endpoints = []
 
