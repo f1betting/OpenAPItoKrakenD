@@ -33,6 +33,7 @@
     - [⚠ Prerequisites](#-prerequisites)
     - [🏡 Running the converter](#-running-the-converter)
 - [🚀 Usage ](#-usage)
+    - [🔐 Supported authorization headers](#-supported-authorization-headers)
     - [🔢 Versioning](#-versioning-your-apis)
         - [🤖 Automatic versioning](#-automatic-versioning)
         - [👷 Manual versioning](#-manual-versioning)
@@ -107,6 +108,23 @@ $ python -m app.main --help
 1. Place the OpenAPI files you wish to convert in the input folder
 2. Run main.py
 3. Find the config folder in ``output``
+
+### 🔐 Supported authorization headers
+
+Depending on your authorization method, it might be possible to automatically add authorization headers to the endpoints
+that require them. Below is a table of the supported authorization schemes.
+
+| Method                         | Supported | Header name             |
+|--------------------------------|-----------|-------------------------|
+| HTTP (Basic)                   | Yes       | Authorization           |
+| HTTP (Bearer)                  | Yes       | Authorization           |
+| API Keys (header)              | Yes       | Defined in OpenAPI spec |
+| API Keys (cookie)              | No        |                         |
+| OAuth 2.0 (Implicit)           | Yes       | Authorization           |
+| OAuth 2.0 (Authorization code) | No        |                         |
+| OAuth 2.0 (Password)           | No        |                         |
+| OAuth 2.0 (Client Credentials) | No        |                         |
+| OpenID Connect Discovery       | No        |                         |
 
 ### 🔢 Versioning your APIs
 
