@@ -10,15 +10,22 @@ import shutil
 from app.utils.errors import InvalidOpenAPIError, OpenAPIFileNotFoundError
 
 
+# Disable pylint too-few-public-methods due to the converter only requiring one public method to work.
+# pylint: disable=too-few-public-methods
 class OpenAPIToKrakenD:
     """
     Batch-convert OpenApi 3 files to a flexible KrakenD configuration
     """
 
-    # pylint: disable=too-many-arguments
     def __init__(self, logging_mode: int, input_folder_path: str, output_folder_path: str, no_versioning: bool = False):
         """
         Initialize converter
+
+        Arguments:
+        logging_mode -- The logging mode used. Use the logging mode from the python logging library
+        input_folder_path -- The path of the input folder that contains the OpenAPI specifications
+        output_folder_path -- The path of the output folder where the configuration gets generated
+        no_versioning -- Disable automatic versioning based on the OpenAPI specification
         """
         logging.basicConfig(level=logging_mode, format="[%(levelname)s]: %(message)s")  # NOSONAR
 
@@ -33,7 +40,7 @@ class OpenAPIToKrakenD:
 
     def convert(self) -> OpenAPIToKrakenD:
         """
-        Convert the OpenAPI files to a flexible KrakenD configuration
+        Convert OpenAPI files to a flexible KrakenD configuration.
         """
         for path in self.paths:
             self.files.append(os.path.basename(path))
@@ -84,7 +91,7 @@ class OpenAPIToKrakenD:
 
     def __new_endpoint(self, endpoint: str, method: str, headers: list):
         """
-        Create a KrakenD endpoint
+        Create a KrakenD formatted endpoint.
         """
         logging.debug("Creating headers")
         headers.append("Content-Type")
@@ -139,9 +146,8 @@ class OpenAPIToKrakenD:
     @staticmethod
     def __get_security_headers(security_scheme):
         """
-        Get the correct security headers for the security scheme
+        Get the correct security headers for the security scheme.
         """
-
         match security_scheme["type"]:
             case "http" if security_scheme["scheme"] == "bearer":
                 logging.debug("Bearer Authentication schema found")
@@ -166,7 +172,35 @@ class OpenAPIToKrakenD:
             case _:
                 return None
 
-    def __get_name_with_version(self, filename, data):
+    def __get_api_define_prefix(self, filename: str, data: dict):
+        """
+        Get the API define and prefix based on the versioning system used.
+        """
+        if ".V" in filename and not self.versioning:
+            api_prefix = filename.replace(".V", "/V").lower()
+            api_define = filename.replace(".V", "V")
+
+        elif ".V" in filename and self.versioning:
+            version = "V" + data["info"]["version"][0:1]
+            api_name = re.sub(r"\.V\d", "", filename)
+
+            api_prefix = (api_name + "/" + version).lower()
+            api_define = api_name + version
+
+        elif self.versioning:
+            api_prefix = str(filename + "/V" + data["info"]["version"][0:1]).lower()
+            api_define = filename + "V" + data["info"]["version"][0:1]
+
+        else:
+            api_prefix = filename.lower()
+            api_define = filename
+
+        return [api_prefix, api_define]
+
+    def __get_name_with_version(self, filename: str, data: dict):
+        """
+        Get the api name based on the versioning system used.
+        """
         name = filename.upper()[:-5]
 
         if ".V" in name and not self.versioning:
@@ -185,9 +219,10 @@ class OpenAPIToKrakenD:
 
     def __verify_openapi(self, file):
         """
-        Verify if the OpenAPI files contain all the required fields
-        """
+        Verify if the OpenAPI files contain all the required fields.
 
+        If the verification fails an InvalidOpenAPIError is raised.
+        """
         with open(f"{self.input_folder_path}/{file}", "r", encoding="utf-8") as openapi_file:
             data: dict = json.load(openapi_file)
 
@@ -207,7 +242,7 @@ class OpenAPIToKrakenD:
 
     def __write_dockerfile(self):
         """
-        Copy the dockerfile
+        Copy the dockerfile to the output folder.
         """
         if "Dockerfile" in self.config_files:
             logging.debug("Using custom Dockerfile")
@@ -218,7 +253,7 @@ class OpenAPIToKrakenD:
 
     def __write_endpoints_template(self):
         """
-        Write the endpoints files
+        Write the endpoints file which links the API definitions and services together.
         """
         service = "{{$service := .}}\n\n"
         define = "{{define \"Endpoints\"}}\n\n"
@@ -263,7 +298,7 @@ class OpenAPIToKrakenD:
 
     def __write_service(self):
         """
-        Write service.json
+        Write the service.json file which contains all the urls to the services.
         """
         service_array = {}
 
@@ -281,7 +316,7 @@ class OpenAPIToKrakenD:
 
     def __write_krakend_json(self):
         """
-        Write the KrakenD configuration
+        Write the KrakenD configuration file.
         """
         logging.info("Generating config")
         krakend_config = {
@@ -323,6 +358,10 @@ class OpenAPIToKrakenD:
     def __format_endpoints(self, file_input, file_output):
         """
         Convert all the endpoints to the KrakenD format
+
+        KrakenD creates a separate endpoint object per route and method, unlike OpenAPI where a path can have multiple
+        methods under the same parent object. Therefor there needs to be a nested for loop for all the methods inside
+        the paths.
         """
         logging.info(f"Formatting endpoints for {file_input}")
 
@@ -337,24 +376,7 @@ class OpenAPIToKrakenD:
             logging.debug(f"Loaded {file_input}")
             data = json.load(openapi_file)
 
-            if ".V" in file_output and not self.versioning:
-                api_prefix = file_output.replace(".V", "/V").lower()
-                api_define = file_output.replace(".V", "V")
-
-            elif ".V" in file_output and self.versioning:
-                version = "V" + data["info"]["version"][0:1]
-                api_name = re.sub(r"\.V\d", "", file_output)
-
-                api_prefix = (api_name + "/" + version).lower()
-                api_define = api_name + version
-
-            elif self.versioning:
-                api_prefix = str(file_output + "/V" + data["info"]["version"][0:1]).lower()
-                api_define = file_output + "V" + data["info"]["version"][0:1]
-
-            else:
-                api_prefix = file_output.lower()
-                api_define = file_output
+            api_prefix, api_define = self.__get_api_define_prefix(file_output, data)
 
             # https://docs.python.org/3/library/string.html#format-string-syntax
             define = f'{{{{define "{api_define}"}}}}\n\n'
@@ -366,9 +388,11 @@ class OpenAPIToKrakenD:
                 logging.debug("Security schemes found in OpenAPI")
                 openapi_security_schemes = data["components"]["securitySchemes"]
 
+            # Loop over every path inside the OpenAPI spec
             for path in data["paths"]:
                 logging.info(f"Starting conversion for {path}")
 
+                # Loop over every method inside the OpenAPI spec
                 for method in data["paths"][path]:
                     logging.info(f"Preparing conversion for {path}: {method}")
 
@@ -408,7 +432,7 @@ class OpenAPIToKrakenD:
 
     def __get_headers(self, endpoint, security_schemes):
         """
-        Get the headers for the endpoint
+        Get the headers for the endpoint from the parameters and authorization methods
         """
         headers = []
 
@@ -436,6 +460,8 @@ class OpenAPIToKrakenD:
         """
         headers = []
 
+        # Disable pylint unnecessary-comprehension due to a false positive. The pylint suggestion does NOT work.
+        # pylint: disable=unnecessary-comprehension
         schemes = [list(item.keys())[0] for item in [scheme for scheme in endpoint["security"]]]
 
         for scheme in schemes:
