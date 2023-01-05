@@ -467,6 +467,8 @@ class OpenAPIToKrakenD:
             header = self.__get_security_headers(security_schemes[scheme])
             if header in headers:
                 raise InvalidOpenAPIError(f"Header '{header}' already exists")
+            if header is None:
+                raise InvalidOpenAPIError("Unsupported authorization method used")
 
             headers.append(header)
 
