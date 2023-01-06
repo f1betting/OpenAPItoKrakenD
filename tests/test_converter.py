@@ -441,77 +441,51 @@ class TestConverter(unittest.TestCase):
 
     def test_dockerfile(self):
         """
-        Test if the dockerfile is made correctly
+        Test if the dockerfile is copied correctly
+        Test if the dockerfile is the same as the default dockerfile
         """
         converter = OpenAPIToKrakenD(logging_mode=logging.ERROR,
                                      input_folder_path="tests/mock_data/full/",
                                      output_folder_path="tests/output")
         converter.convert()
 
+        # Test if the dockerfile is copied correctly
+        self.assertTrue(os.path.exists("tests/output/Dockerfile"))
+
         with open("tests/output/Dockerfile", "r", encoding="utf-8") as dockerfile:
             dockerfile_string = dockerfile.read()
 
-        dockerfile_template = """# Build KrakenD configuration file
-FROM devopsfaith/krakend:2.1.3 as builder
+        with open("tests/mock_data/default_dockerfile", "r", encoding="utf-8") as custom_dockerfile:
+            dockerfile_template = custom_dockerfile.read()
 
-COPY /config /etc/krakend/config
-
-RUN FC_ENABLE=1 \\
-    FC_OUT=/tmp/krakend.json \\
-    FC_SETTINGS="config/settings" \\
-    FC_TEMPLATES="config/templates" \\
-    krakend check -t -d -c "config/krakend.json"
-
-RUN krakend check -c /tmp/krakend.json --lint
-
-# Add the built configuration file to the final Docker image
-FROM devopsfaith/krakend:2.1.3
-
-COPY --from=builder --chown=krakend:root /tmp/krakend.json ."""
-
+        # Test if the dockerfile is the same as the default dockerfile
         self.assertEqual(dockerfile_string, dockerfile_template)
 
     def test_custom_dockerfile(self):
         """
-        Test if the custom dockerfile is made correctly
+        Test if the custom dockerfile is copied correctly
+        Test if the custom dockerfile is the same as the one in the input folder
         """
         converter = OpenAPIToKrakenD(logging_mode=logging.ERROR,
                                      input_folder_path="tests/mock_data/custom_dockerfile/",
                                      output_folder_path="tests/output")
         converter.convert()
 
+        # Test if the custom dockerfile is copied correctly
+        self.assertTrue(os.path.exists("tests/output/Dockerfile"))
+
         with open("tests/output/Dockerfile", "r", encoding="utf-8") as dockerfile:
             dockerfile_string = dockerfile.read()
 
-        dockerfile_template = """# Build KrakenD configuration file
-FROM devopsfaith/krakend:2.1.3 as builder
+        with open("tests/mock_data/custom_dockerfile/config/Dockerfile", "r", encoding="utf-8") as custom_dockerfile:
+            dockerfile_template = custom_dockerfile.read()
 
-COPY /config /etc/krakend/config
-
-RUN FC_ENABLE=1 \\
-    FC_OUT=/tmp/krakend.json \\
-    FC_SETTINGS="config/settings" \\
-    FC_TEMPLATES="config/templates" \\
-    krakend check -t -d -c "config/krakend.json"
-
-RUN krakend check -c /tmp/krakend.json --lint
-
-# Add the built configuration file to the final Docker image
-FROM devopsfaith/krakend:2.1.3
-
-COPY /config/plugins /etc/krakend/config/plugins
-COPY /config/credentials.json /etc/krakend/config/
-
-COPY --from=builder --chown=krakend /tmp/krakend.json .
-
-ENV GOOGLE_APPLICATION_CREDENTIALS="/etc/krakend/config/credentials.json"
-"""
-
+        # Test if the custom dockerfile is the same as the one in the input folder
         self.assertEqual(dockerfile_string, dockerfile_template)
 
     def test_folder_exists(self):
         """
-        Test if the name in KrakenD.json is equal to "Test gateway" when the folder structure already exists
+        Test if KrakenD.json exists when the config folders already exist
         """
         os.mkdir(os.path.join("tests/output/config"))
         os.mkdir(os.path.join("tests/output/config/settings"))
@@ -522,13 +496,15 @@ ENV GOOGLE_APPLICATION_CREDENTIALS="/etc/krakend/config/credentials.json"
                                      output_folder_path="tests/output")
         converter.convert()
 
-        with open("tests/output/config/krakend.json", "r", encoding="utf-8") as config_file:
-            config = config_file.read()
+        # Test if KrakenD.json exists when the config folders already exist
+        self.assertTrue(os.path.exists("tests/output/config/krakend.json"))
 
-        config_data = config.replace("[{{template \"Endpoints\".service}}]",
-                                     "\"[{{template \\\"Endpoints\\\".service}}]\"")
+    def test_debug_mode(self):
+        """
+        Test if the logger's logging level is being set properly
+        """
+        converter = OpenAPIToKrakenD(logging_mode=logging.DEBUG,
+                                     input_folder_path="tests/mock_data/full/",
+                                     output_folder_path="tests/output")
 
-        config_json = json.loads(config_data)
-
-        # Test if the name in KrakenD.json is equal to "Test gateway"
-        self.assertEqual(config_json["name"], "Test gateway")
+        self.assertEqual(converter.logger.get_logger().level, logging.DEBUG)

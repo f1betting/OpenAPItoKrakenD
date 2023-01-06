@@ -4,6 +4,7 @@ from typing import Optional
 import typer
 
 from app.logic.converter import OpenAPIToKrakenD
+from app.utils.customlogger import CustomLogger
 from app.utils.errors import OpenAPIFileNotFoundError, InvalidOpenAPIError
 
 app = typer.Typer(pretty_exceptions_short=True, pretty_exceptions_show_locals=False)
@@ -33,4 +34,4 @@ if __name__ == "__main__":  # pragma: no coverage
     try:
         app()
     except (OpenAPIFileNotFoundError, InvalidOpenAPIError) as e:
-        logging.getLogger().error(e)
+        CustomLogger().error(e)
