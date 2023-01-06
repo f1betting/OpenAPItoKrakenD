@@ -2,11 +2,11 @@ from __future__ import annotations
 
 import glob
 import json
-import logging
 import os
 import re
 import shutil
 
+from app.utils.customlogger import CustomLogger
 from app.utils.errors import InvalidOpenAPIError, OpenAPIFileNotFoundError
 
 
@@ -17,6 +17,8 @@ class OpenAPIToKrakenD:
     Batch-convert OpenApi 3 files to a flexible KrakenD configuration
     """
 
+    # Disable pylint too-many-instance-attributes due to required attributes for the converter to work.
+    # pylint: disable=too-many-instance-attributes
     def __init__(self, logging_mode: int, input_folder_path: str, output_folder_path: str, no_versioning: bool = False):
         """
         Initialize converter
@@ -27,7 +29,7 @@ class OpenAPIToKrakenD:
         output_folder_path -- The path of the output folder where the configuration gets generated
         no_versioning -- Disable automatic versioning based on the OpenAPI specification
         """
-        logging.basicConfig(level=logging_mode, format="[%(levelname)s]: %(message)s")  # NOSONAR
+        self.logger = CustomLogger(logging_mode)
 
         self.paths: list = glob.glob(f"{input_folder_path}/*.json")
         self.config_paths: list = glob.glob(f"{input_folder_path}/config/*")
@@ -49,43 +51,43 @@ class OpenAPIToKrakenD:
             raise OpenAPIFileNotFoundError(f"No files found in '{self.input_folder_path}'")
 
         if len(self.config_paths) > 0:
-            logging.info("Using custom configuration files")
+            self.logger.info("Using custom configuration files")
             for config_path in self.config_paths:
                 self.config_files.append(os.path.basename(config_path))
 
-        logging.info("Verifying OpenAPI files")
+        self.logger.info("Verifying OpenAPI files")
         for file in self.files:
-            logging.info(f"Verifying {file}")
+            self.logger.info(f"Verifying {file}")
             self.__verify_openapi(file)
-            logging.info(f"Verified {file}")
-        logging.info("Verified OpenAPI files")
+            self.logger.info(f"Verified {file}")
+        self.logger.info("Verified OpenAPI files")
 
-        logging.info("Creating folders")
+        self.logger.info("Creating folders")
         self.__create_folders()
-        logging.info("Created folder")
+        self.logger.info("Created folder")
 
-        logging.info("Writing endpoint files")
+        self.logger.info("Writing endpoint files")
         for file in self.files:
-            logging.info(f"Writing {file[:-5]}.tmpl")
+            self.logger.info(f"Writing {file[:-5]}.tmpl")
             self.__format_endpoints(file, file[:-5].upper())
-            logging.info(f"Finished writing {file[:-5]}.tmpl")
-        logging.info("Finished writing endpoint files")
+            self.logger.info(f"Finished writing {file[:-5]}.tmpl")
+        self.logger.info("Finished writing endpoint files")
 
-        logging.info("Writing templates/Endpoints.tmpl")
+        self.logger.info("Writing templates/Endpoints.tmpl")
         self.__write_endpoints_template()
-        logging.info("Finished writing templates/Endpoints.tmpl")
+        self.logger.info("Finished writing templates/Endpoints.tmpl")
 
-        logging.info("Writing settings/service.json")
+        self.logger.info("Writing settings/service.json")
         self.__write_service()
-        logging.info("Finished writing settings/service.json")
+        self.logger.info("Finished writing settings/service.json")
 
-        logging.info("Writing krakend.json")
+        self.logger.info("Writing krakend.json")
         self.__write_krakend_json()
-        logging.info("Finished writing krakend.json")
+        self.logger.info("Finished writing krakend.json")
 
-        logging.info("Writing Dockerfile")
+        self.logger.info("Writing Dockerfile")
         self.__write_dockerfile()
-        logging.info("Finished writing Dockerfile")
+        self.logger.info("Finished writing Dockerfile")
 
         return self
 
@@ -93,10 +95,10 @@ class OpenAPIToKrakenD:
         """
         Create a KrakenD formatted endpoint.
         """
-        logging.debug("Creating headers")
+        self.logger.debug("Creating headers")
         headers.append("Content-Type")
 
-        logging.debug("Creating endpoint")
+        self.logger.debug("Creating endpoint")
         formatted_endpoint = {
             "endpoint": "{{ $prefix }}" + endpoint,
             "method": method,
@@ -112,57 +114,56 @@ class OpenAPIToKrakenD:
             "input_headers": headers
         }
 
-        logging.debug("Adding endpoint configuration")
+        self.logger.debug("Adding endpoint configuration")
         if "endpoint.json" in self.config_files:
-            logging.debug("Using custom endpoint configuration")
+            self.logger.debug("Using custom endpoint configuration")
             with open(f"{self.input_folder_path}/config/endpoint.json", "r", encoding="utf-8") as endpoint_config_file:
                 endpoint_config = json.load(endpoint_config_file)
         else:
-            logging.debug("Using default endpoint configuration")
+            self.logger.debug("Using default endpoint configuration")
             with open("app/config/endpoint.json", "r", encoding="utf-8") as endpoint_config_file:
                 endpoint_config = json.load(endpoint_config_file)
 
         for key in endpoint_config:
-            logging.debug(f"Adding {key}")
+            self.logger.debug(f"Adding {key}")
             formatted_endpoint[key] = endpoint_config[key]
-        logging.debug("Added endpoint configuration")
+        self.logger.debug("Added endpoint configuration")
 
-        logging.debug("Adding backend configuration")
+        self.logger.debug("Adding backend configuration")
         if "backend.json" in self.config_files:
-            logging.debug("Using custom backend configuration")
+            self.logger.debug("Using custom backend configuration")
             with open(f"{self.input_folder_path}/config/backend.json", "r", encoding="utf-8") as backend_config_file:
                 backend_config = json.load(backend_config_file)
         else:
-            logging.debug("Using default backend configuration")
+            self.logger.debug("Using default backend configuration")
             with open("app/config/backend.json", "r", encoding="utf-8") as backend_config_file:
                 backend_config = json.load(backend_config_file)
 
         for key in backend_config:
             formatted_endpoint["backend"][0][key] = backend_config[key]
-        logging.debug("Added backend configuration")
+        self.logger.debug("Added backend configuration")
 
         return formatted_endpoint
 
-    @staticmethod
-    def __get_security_headers(security_scheme):
+    def __get_security_headers(self, security_scheme):
         """
         Get the correct security headers for the security scheme.
         """
         match security_scheme["type"]:
             case "http":
-                logging.debug("HTTP authentication schema found")
+                self.logger.debug("HTTP authentication schema found")
 
-                logging.debug("Setting security header to 'Authorization'")
+                self.logger.debug("Setting security header to 'Authorization'")
                 return "Authorization"
             case "apiKey" if security_scheme["in"] == "header":
-                logging.debug("API Key Header authentication schema found")
+                self.logger.debug("API Key Header authentication schema found")
 
-                logging.debug(f"Setting security header to '{security_scheme['name']}'")
+                self.logger.debug(f"Setting security header to '{security_scheme['name']}'")
                 return security_scheme["name"]
             case "oauth2" if "implicit" in security_scheme["flows"]:
-                logging.debug("OAuth2 Implicit Authentication schema found")
+                self.logger.debug("OAuth2 Implicit Authentication schema found")
 
-                logging.debug("Setting security header to 'Authorization'")
+                self.logger.debug("Setting security header to 'Authorization'")
                 return "Authorization"
             case _:
                 return None
@@ -221,7 +222,7 @@ class OpenAPIToKrakenD:
         with open(f"{self.input_folder_path}/{file}", "r", encoding="utf-8") as openapi_file:
             data: dict = json.load(openapi_file)
 
-            logging.debug("Verifying server")
+            self.logger.debug("Verifying server")
 
             if "servers" in data.keys() and len(data["servers"]) >= 1 and "url" in data["servers"][0]:
                 server = data["servers"][0]["url"]
@@ -230,7 +231,7 @@ class OpenAPIToKrakenD:
             else:
                 raise InvalidOpenAPIError(f"{file}: no servers defined")
 
-            logging.debug("Verifying version")
+            self.logger.debug("Verifying version")
 
             if "info" not in data.keys() or "version" not in data["info"].keys():
                 raise InvalidOpenAPIError("No version found")
@@ -240,10 +241,10 @@ class OpenAPIToKrakenD:
         Copy the dockerfile to the output folder.
         """
         if "Dockerfile" in self.config_files:
-            logging.debug("Using custom Dockerfile")
+            self.logger.debug("Using custom Dockerfile")
             shutil.copy(f"{self.input_folder_path}/config/Dockerfile", f"{self.output_folder_path}")
         else:
-            logging.debug("Using default Dockerfile")
+            self.logger.debug("Using default Dockerfile")
             shutil.copy("app/config/Dockerfile", f"{self.output_folder_path}")
 
     def __write_endpoints_template(self):
@@ -256,13 +257,13 @@ class OpenAPIToKrakenD:
 
         with open(f"{self.output_folder_path}/config/templates/Endpoints.tmpl", "w+",
                   encoding="utf-8") as endpoints_file:
-            logging.info("Formatting endpoints file")
+            self.logger.info("Formatting endpoints file")
 
-            logging.debug("Writing template")
+            self.logger.debug("Writing template")
             endpoints_file.write(define + service)
 
             for file in self.files:
-                logging.debug(f"Loaded {file}")
+                self.logger.debug(f"Loaded {file}")
 
                 with open(f"{self.input_folder_path}/{file}", "r", encoding="utf-8") as json_file:
                     data = json.load(json_file)
@@ -272,23 +273,23 @@ class OpenAPIToKrakenD:
                 # https://docs.python.org/3/library/string.html#format-string-syntax
                 data = f'{{{{template "{name}" $service.{name}}}}}\n'
 
-                logging.debug(f"Writing service {file[:-5].upper()}")
+                self.logger.debug(f"Writing service {file[:-5].upper()}")
                 endpoints_file.write(data)
 
-            logging.debug("Writing end template")
+            self.logger.debug("Writing end template")
             endpoints_file.write(end)
 
             endpoints_file.seek(0)
 
-            logging.debug("Reading file data")
+            self.logger.debug("Reading file data")
             file_data = endpoints_file.read()
 
-            logging.debug("Converting file data to JSON")
+            self.logger.debug("Converting file data to JSON")
             file_data = file_data.replace("}}\n{{", "}},\n{{")
 
             endpoints_file.seek(0)
 
-            logging.info("Writing file")
+            self.logger.info("Writing file")
             endpoints_file.write(file_data)
 
     def __write_service(self):
@@ -313,43 +314,45 @@ class OpenAPIToKrakenD:
         """
         Write the KrakenD configuration file.
         """
-        logging.info("Generating config")
+        self.logger.info("Generating config")
         krakend_config = {
             "endpoints": '[{{template "Endpoints".service}}]'
         }
 
-        logging.debug("Adding configuration")
+        self.logger.debug("Adding configuration")
         if "krakend.json" in self.config_files:
-            logging.debug("Using custom krakend configuration")
+            self.logger.debug("Using custom krakend configuration")
             with open(f"{self.input_folder_path}/config/krakend.json", "r", encoding="utf-8") as config_file:
                 config = json.load(config_file)
         else:
-            logging.debug("Using default krakend configuration")
+            self.logger.debug("Using default krakend configuration")
             with open("app/config/krakend.json", "r", encoding="utf-8") as config_file:
                 config = json.load(config_file)
 
         for key in config:
-            logging.debug(f"Adding {key}")
+            self.logger.debug(f"Adding {key}")
             krakend_config[key] = config[key]
-        logging.debug("Added configuration")
+        self.logger.debug("Added configuration")
 
-        logging.debug("Loading config")
+        self.logger.debug("Loading config")
         config_data = json.dumps(krakend_config, indent=4)
 
-        logging.debug("Reformatting endpoints value")
+        self.logger.debug("Reformatting endpoints value")
 
         json_string = config_data.replace("\"[{{template \\\"Endpoints\\\".service}}]\"",
                                           "[{{template \"Endpoints\".service}}]")
 
-        logging.debug("Reformatted endpoints value")
+        self.logger.debug("Reformatted endpoints value")
 
-        logging.info("Config generated")
+        self.logger.info("Config generated")
 
         with open(f"{self.output_folder_path}/config/krakend.json", "w+", encoding="utf-8") as config_file:
-            logging.info("Writing file")
+            self.logger.info("Writing file")
             config_file.write(json_string)
-            logging.info("Finished writing file")
+            self.logger.info("Finished writing file")
 
+    # Disable pylint too-many-locals due to a high amount of variables required for this method to work.
+    # pylint: disable=too-many-locals
     def __format_endpoints(self, file_input, file_output):
         """
         Convert all the endpoints to the KrakenD format
@@ -358,7 +361,7 @@ class OpenAPIToKrakenD:
         methods under the same parent object. Therefor there needs to be a nested for loop for all the methods inside
         the paths.
         """
-        logging.info(f"Formatting endpoints for {file_input}")
+        self.logger.info(f"Formatting endpoints for {file_input}")
 
         endpoints_list = []
 
@@ -368,7 +371,7 @@ class OpenAPIToKrakenD:
         output_path = f"{self.output_folder_path}/config/templates/{file_output}"
 
         with open(f"{self.input_folder_path}/{file_input}", "r+", encoding="utf-8") as openapi_file:
-            logging.debug(f"Loaded {file_input}")
+            self.logger.debug(f"Loaded {file_input}")
             data = json.load(openapi_file)
 
             api_prefix, api_define = self.__get_api_define_prefix(file_output, data)
@@ -380,49 +383,49 @@ class OpenAPIToKrakenD:
             openapi_security_schemes = None
 
             if "components" in data and "securitySchemes" in data["components"]:
-                logging.debug("Security schemes found in OpenAPI")
+                self.logger.debug("Security schemes found in OpenAPI")
                 openapi_security_schemes = data["components"]["securitySchemes"]
 
             # Loop over every path inside the OpenAPI spec
             for path in data["paths"]:
-                logging.info(f"Starting conversion for {path}")
+                self.logger.info(f"Starting conversion for {path}")
 
                 # Loop over every method inside the OpenAPI spec
                 for method in data["paths"][path]:
-                    logging.info(f"Preparing conversion for {path}: {method}")
+                    self.logger.info(f"Preparing conversion for {path}: {method}")
 
                     headers = self.__get_headers(data["paths"][path][method], openapi_security_schemes)
 
-                    logging.info(f"Converting {path}: {method}")
+                    self.logger.info(f"Converting {path}: {method}")
                     krakend_endpoint = self.__new_endpoint(path, method.upper(), headers)
-                    logging.info(f"Converted {path}: {method}")
+                    self.logger.info(f"Converted {path}: {method}")
 
-                    logging.debug("Adding endpoint to list")
+                    self.logger.debug("Adding endpoint to list")
                     endpoints_list.append(krakend_endpoint)
-                    logging.debug("Added endpoint to list")
+                    self.logger.debug("Added endpoint to list")
 
         endpoints = endpoints_list
 
         with open(f"{output_path}.tmpl", "w+", encoding="utf-8") as file:
-            logging.debug("Write start template")
+            self.logger.debug("Write start template")
             file.write(define + host + prefix)
 
             for endpoint in endpoints:
-                logging.debug(f'Writing endpoint {endpoint["backend"][0]["url_pattern"]}')
+                self.logger.debug(f'Writing endpoint {endpoint["backend"][0]["url_pattern"]}')
                 file.write(json.dumps(endpoint, indent=4))
 
-            logging.debug("Writing end template")
+            self.logger.debug("Writing end template")
             file.write(end)
             file.seek(0)
 
-            logging.debug("Reading file")
+            self.logger.debug("Reading file")
             file_data = file.read()
 
-            logging.info("Converting endpoints to valid JSON")
+            self.logger.info("Converting endpoints to valid JSON")
             file_data = file_data.replace("}{", "},\n{")
             file.seek(0)
 
-            logging.info(f"Writing {output_path}.tmpl")
+            self.logger.info(f"Writing {output_path}.tmpl")
             file.write(file_data)
 
     def __get_headers(self, endpoint, security_schemes):
@@ -432,20 +435,20 @@ class OpenAPIToKrakenD:
         headers = []
 
         if "security" in endpoint and endpoint["security"] is not None:
-            logging.debug("Adding security headers")
+            self.logger.debug("Adding security headers")
             headers = self.__add_security_headers(endpoint, security_schemes)
-            logging.debug("Added security headers")
+            self.logger.debug("Added security headers")
         else:
-            logging.debug("No authorization header required")
+            self.logger.debug("No authorization header required")
 
         if "parameters" in endpoint and endpoint["parameters"] is not None:
             for parameter in endpoint["parameters"]:
                 if parameter["in"] == "header":
-                    logging.debug(f'Adding {parameter["name"]} to headers')
+                    self.logger.debug(f'Adding {parameter["name"]} to headers')
                     headers.append(parameter["name"])
-                    logging.debug(f'Added {parameter["name"]} to headers')
+                    self.logger.debug(f'Added {parameter["name"]} to headers')
         else:
-            logging.debug("No parameters found")
+            self.logger.debug("No parameters found")
 
         return headers
 
@@ -463,7 +466,7 @@ class OpenAPIToKrakenD:
             if scheme not in security_schemes:
                 raise InvalidOpenAPIError(f"{scheme} does not exist in OpenAPI specification")
 
-            logging.debug(f"Adding header for components.securitySchemes.{scheme}")
+            self.logger.debug(f"Adding header for components.securitySchemes.{scheme}")
             header = self.__get_security_headers(security_schemes[scheme])
             if header in headers:
                 raise InvalidOpenAPIError(f"Header '{header}' already exists")
@@ -472,7 +475,7 @@ class OpenAPIToKrakenD:
 
             headers.append(header)
 
-            logging.debug(f"Added header for components.securitySchemes.{scheme}")
+            self.logger.debug(f"Added header for components.securitySchemes.{scheme}")
 
         return headers
 
