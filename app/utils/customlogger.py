@@ -2,7 +2,7 @@ import logging
 import sys
 
 
-class CustomLogger(logging.Logger):
+class CustomLogger(logging.Logger):  # NOSONAR
     """
     The logger for the converter
 
