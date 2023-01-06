@@ -17,7 +17,7 @@ jobs:
           pip install -r ./requirements.txt
       # testing
       - name: Test with pytest
-        run: coverage run --source=app --branch -m unittest discover -v
+        run: coverage run --branch -m unittest discover -v
       - name: Testing rapport
         run: python -m coverage xml
       # display report
