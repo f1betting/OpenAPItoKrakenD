@@ -19,7 +19,10 @@ class CustomLogger(logging.Logger):  # NOSONAR
         self.logger.setLevel(logging_level)
         self.logger.addHandler(self.stream_handler)
 
-    def get_logger(self):
+    def get_logger(self) -> logging.Logger:
+        """
+        Returns the logger
+        """
         return self.logger
 
     def critical(self, msg, *args, **kwargs):
