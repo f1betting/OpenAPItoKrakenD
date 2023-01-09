@@ -299,6 +299,36 @@ class OpenAPIToKrakenD:
             self.logger.info("Writing file")
             endpoints_file.write(file_data)
 
+    def __get_target_backend(self, data, service_name, filename):
+        """
+        Get the target backend for the API based on the environment chosen
+        """
+        service = None
+
+        # If an environment is specified, attempt to search for server
+        if self.env:
+            self.logger.debug("Custom environment provided")
+            for server in data["servers"]:
+                if "description" not in server:
+                    self.logger.debug("Description not found, trying next")
+                    continue
+
+                if server["description"] == self.env:
+                    self.logger.debug("Description found")
+                    service = {service_name: server["url"]}
+                    break
+
+        # If no environment is specified or if no server is found, use first entry in server list
+        if service is None:
+            if self.env:
+                self.logger.error(
+                    f"[{filename}] Server environment `{self.env}` unknown. Using {data['servers'][0]['url']}")
+
+            self.logger.debug("Custom environment not provided, using first entry in server list")
+            service = {service_name: data["servers"][0]["url"]}
+
+        return service
+
     def __write_service(self):
         """
         Write the service.json file which contains all the urls to the services.
@@ -310,29 +340,7 @@ class OpenAPIToKrakenD:
                 data = json.load(file)
 
             service_name = self.__get_name_with_version(filename, data)
-            service = None
-
-            # If an environment is specified, attempt to search for server
-            if self.env:
-                self.logger.debug("Custom environment provided")
-                for server in data["servers"]:
-                    if "description" not in server:
-                        self.logger.debug("Description not found, trying next")
-                        continue
-
-                    if server["description"] == self.env:
-                        self.logger.debug("Description found")
-                        service = {service_name: server["url"]}
-                        break
-
-            # If no environment is specified or if no server is found, use first entry in server list
-            if service is None:
-                if self.env:
-                    self.logger.error(
-                        f"[{filename}] Server environment `{self.env}` unknown. Using {data['servers'][0]['url']}")
-
-                self.logger.debug("Custom environment not provided, using first entry in server list")
-                service = {service_name: data["servers"][0]["url"]}
+            service = self.__get_target_backend(data, service_name, filename)
 
             service_array.update(service)
 
