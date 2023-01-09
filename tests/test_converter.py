@@ -426,7 +426,7 @@ class TestConverter(unittest.TestCase):
 
     def test_service(self):
         """
-        Test settings/service.json
+        Test settings/service.json if no environment is specified
         """
         converter = OpenAPIToKrakenD(logging_mode=logging.ERROR,
                                      input_folder_path="tests/mock_data/full/",
@@ -437,6 +437,46 @@ class TestConverter(unittest.TestCase):
         with open("tests/output/config/settings/service.json", "r", encoding="utf-8") as service_file:
             service_json = json.load(service_file)
 
+        self.assertEqual(service_json["OPENAPI"], "https://f1-betting.app")
+
+    def test_service_environment(self):
+        """
+        Test settings/service.json if environment is provided WITH a description field
+        """
+        converter = OpenAPIToKrakenD(logging_mode=logging.ERROR,
+                                     input_folder_path="tests/mock_data/environment/",
+                                     output_folder_path="tests/output",
+                                     env="dev",
+                                     no_versioning=True)
+        converter.convert()
+
+        with open("tests/output/config/settings/service.json", "r", encoding="utf-8") as service_file:
+            service_json = json.load(service_file)
+
+        self.assertEqual(service_json["OPENAPI"], "https://f1-betting.dev")
+
+    def test_no_valid_environment(self):
+        """
+        Test if the log is thrown correctly
+        Test settings/service.json if the provided environment does not exist in the OpenAPI specification
+        """
+        converter = OpenAPIToKrakenD(logging_mode=logging.ERROR,
+                                     input_folder_path="tests/mock_data/environment/",
+                                     output_folder_path="tests/output",
+                                     env="staging",
+                                     no_versioning=True)
+
+        # Test if the log is thrown correctly
+        with self.assertLogs(converter.logger.get_logger(), logging.ERROR) as context_manager:
+            converter.convert()
+
+            self.assertTrue(['[OpenAPI.json] Server environment `staging` unknown. Using https://f1-betting.app'
+                             in r for r in context_manager.output])
+
+        with open("tests/output/config/settings/service.json", "r", encoding="utf-8") as service_file:
+            service_json = json.load(service_file)
+
+        # Test settings/service.json if environment is provided WITH a description field
         self.assertEqual(service_json["OPENAPI"], "https://f1-betting.app")
 
     def test_dockerfile(self):

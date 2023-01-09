@@ -19,7 +19,10 @@ class OpenAPIToKrakenD:
 
     # Disable pylint too-many-instance-attributes due to required attributes for the converter to work.
     # pylint: disable=too-many-instance-attributes
-    def __init__(self, logging_mode: int, input_folder_path: str, output_folder_path: str, no_versioning: bool = False):
+    # Disable pylint too-many-arguments due to required attributes for the converter to work.
+    # pylint: disable=too-many-arguments
+    def __init__(self, logging_mode: int, input_folder_path: str, output_folder_path: str, no_versioning: bool = False,
+                 env: str = None):
         """
         Initialize converter
 
@@ -27,6 +30,8 @@ class OpenAPIToKrakenD:
         logging_mode -- The logging mode used. Use the logging mode from the python logging library
         input_folder_path -- The path of the input folder that contains the OpenAPI specifications
         output_folder_path -- The path of the output folder where the configuration gets generated
+        env -- Set the backend target URL to the description of the server object inside the OpenAPI specification
+               (picks the first entry if not specified)
         no_versioning -- Disable automatic versioning based on the OpenAPI specification
         """
         self.logger = CustomLogger(logging_mode)
@@ -37,6 +42,8 @@ class OpenAPIToKrakenD:
         self.config_files: list = []
         self.input_folder_path: str = input_folder_path
         self.output_folder_path: str = output_folder_path
+
+        self.env = env
 
         self.versioning: bool = not no_versioning
 
@@ -303,7 +310,29 @@ class OpenAPIToKrakenD:
                 data = json.load(file)
 
             service_name = self.__get_name_with_version(filename, data)
-            service = {service_name: data["servers"][0]["url"]}
+            service = None
+
+            # If an environment is specified, attempt to search for server
+            if self.env:
+                self.logger.debug("Custom environment provided")
+                for server in data["servers"]:
+                    if "description" not in server:
+                        self.logger.debug("Description not found, trying next")
+                        continue
+
+                    if server["description"] == self.env:
+                        self.logger.debug("Description found")
+                        service = {service_name: server["url"]}
+                        break
+
+            # If no environment is specified or if no server is found, use first entry in server list
+            if service is None:
+                if self.env:
+                    self.logger.error(
+                        f"[{filename}] Server environment `{self.env}` unknown. Using {data['servers'][0]['url']}")
+
+                self.logger.debug("Custom environment not provided, using first entry in server list")
+                service = {service_name: data["servers"][0]["url"]}
 
             service_array.update(service)
 
