@@ -479,6 +479,30 @@ class TestConverter(unittest.TestCase):
         # Test settings/service.json if environment is provided WITH a description field
         self.assertEqual(service_json["OPENAPI"], "https://f1-betting.app")
 
+    def test_no_description_in_server(self):
+        """
+        Test if the log is thrown correctly
+        Test settings/service.json if the provided environment does not exist in the OpenAPI specification
+        """
+        converter = OpenAPIToKrakenD(logging_mode=logging.ERROR,
+                                     input_folder_path="tests/mock_data/no_environment/",
+                                     output_folder_path="tests/output",
+                                     env="staging",
+                                     no_versioning=True)
+
+        # Test if the log is thrown correctly
+        with self.assertLogs(converter.logger.get_logger(), logging.DEBUG) as context_manager:
+            converter.convert()
+
+            self.assertTrue(["[OpenAPI.json] Description not found, trying next"
+                             in r for r in context_manager.output])
+
+        with open("tests/output/config/settings/service.json", "r", encoding="utf-8") as service_file:
+            service_json = json.load(service_file)
+
+        # Test settings/service.json if environment is provided WITH a description field
+        self.assertEqual(service_json["OPENAPI"], "https://f1-betting.app")
+
     def test_dockerfile(self):
         """
         Test if the dockerfile is copied correctly

@@ -307,14 +307,14 @@ class OpenAPIToKrakenD:
 
         # If an environment is specified, attempt to search for server
         if self.env:
-            self.logger.debug("Custom environment provided")
+            self.logger.debug(f"[{filename}] Custom environment provided")
             for server in data["servers"]:
                 if "description" not in server:
-                    self.logger.debug("Description not found, trying next")
+                    self.logger.debug(f"[{filename}] Description not found, trying next")
                     continue
 
                 if server["description"] == self.env:
-                    self.logger.debug("Description found")
+                    self.logger.debug(f"[{filename}] Description found")
                     service = {service_name: server["url"]}
                     break
 
