@@ -6,6 +6,9 @@ inputs:
   input-folder:
     required: true
     description: The input folder that contains the OpenAPI specs and optional custom configuration
+  environment:
+    required: false
+    description: Set the backend target URL to the description of the server object inside the OpenAPI specification
   disable-versioning:
     required: false
     description: Disable automatic versioning based on OpenAPI specifications
@@ -32,9 +35,11 @@ runs:
         export PYTHONPATH=${{ github.action_path }}
         
         echo "python -m app.main ${{inputs.input-folder}} output \
+          $(if [ -n "${{inputs.environment}}" ]; then echo " --env ${{inputs.environment}}"; fi) \
           $(if [ -n "${{inputs.disable-versioning}}" ]; then echo " --disable-automatic-versioning"; fi)"
         
         python -m app.main ${{inputs.input-folder}} output \
+          $(if [ -n "${{inputs.environment}}" ]; then echo " --env ${{inputs.environment}}"; fi) \
           $(if [ -n "${{inputs.disable-versioning}}" ]; then echo " --disable-automatic-versioning"; fi)
 
     - name: Upload output as artifact
