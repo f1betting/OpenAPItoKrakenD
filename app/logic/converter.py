@@ -98,7 +98,7 @@ class OpenAPIToKrakenD:
 
         return self
 
-    def __new_endpoint(self, endpoint: str, method: str, headers: list):
+    def __new_endpoint(self, endpoint: str, method: str, headers: list, query_strings: list):
         """
         Create a KrakenD formatted endpoint.
         """
@@ -118,7 +118,8 @@ class OpenAPIToKrakenD:
                     ],
                 }
             ],
-            "input_headers": headers
+            "input_headers": headers,
+            "input_query_strings": query_strings
         }
 
         self.logger.debug("Adding endpoint configuration")
@@ -432,9 +433,10 @@ class OpenAPIToKrakenD:
                     self.logger.info(f"Preparing conversion for {path}: {method}")
 
                     headers = self.__get_headers(data["paths"][path][method], openapi_security_schemes)
+                    query_strings = self.__get_query_strings(data["paths"][path][method])
 
                     self.logger.info(f"Converting {path}: {method}")
-                    krakend_endpoint = self.__new_endpoint(path, method.upper(), headers)
+                    krakend_endpoint = self.__new_endpoint(path, method.upper(), headers, query_strings)
                     self.logger.info(f"Converted {path}: {method}")
 
                     self.logger.debug("Adding endpoint to list")
@@ -488,6 +490,23 @@ class OpenAPIToKrakenD:
             self.logger.debug("No parameters found")
 
         return headers
+
+    def __get_query_strings(self, endpoint):
+        """
+        Get the query strings for the endpoint from the parameters
+        """
+        query_strings = []
+
+        if "parameters" in endpoint and endpoint["parameters"] is not None:
+            for parameter in endpoint["parameters"]:
+                if parameter["in"] == "query":
+                    self.logger.debug(f'Adding {parameter["name"]} to query strings')
+                    query_strings.append(parameter["name"])
+                    self.logger.debug(f'Added {parameter["name"]} to query strings')
+        else:
+            self.logger.debug("No parameters found")
+
+        return query_strings
 
     def __add_security_headers(self, endpoint, security_schemes):
         """

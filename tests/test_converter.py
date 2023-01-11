@@ -330,6 +330,35 @@ class TestConverter(unittest.TestCase):
         # Test if /users/{user_id} contains user_id as a header parameter
         self.assertTrue("user_id" in endpoints[2]["input_headers"])
 
+    def test_query_parameter_on_endpoint(self):
+        """
+        Test if /bet (PUT) contains ["p1", "p2", "p3"] as input query strings
+        """
+        converter = OpenAPIToKrakenD(logging_mode=logging.ERROR,
+                                     input_folder_path="tests/mock_data/full/",
+                                     output_folder_path="tests/output")
+        converter.convert()
+
+        with open("tests/output/config/templates/OPENAPI.tmpl", "r", encoding="utf-8") as template_file:
+            template = template_file.read()
+
+        # Remove templating
+        config_data = re.sub(r"^({{(.*?)}})", "", template, flags=re.M).strip()
+
+        # Split objects
+        # "(?<=}),\n" selects all the commas (",") after a closing curly bracket ("}") that prepend a newline ("\n")
+        # "^(?!\s)" matches all the spaces after the newline and removes them from the match
+        endpoints_data = re.split(r"(?<=}),\n^(?!\s)", config_data, flags=re.M)
+
+        endpoints = []
+
+        # Load JSON to array
+        for endpoint in endpoints_data:
+            endpoints.append(json.loads(endpoint))
+
+        # Test if /bet (PUT) contains ["p1", "p2", "p3"] as input query strings
+        self.assertEqual(["p1", "p2", "p3"], endpoints[4]["input_query_strings"])
+
     def test_no_version_defined(self):
         """
         Test if OPENAPI.tmpl has the correct prefix without a version

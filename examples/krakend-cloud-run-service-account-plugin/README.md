@@ -1,11 +1,14 @@
 ## KrakenD Cloud Run service account
 
 The action example in this folder automatically deploys the KrakenD gateway to Google Cloud Run with
-the [krakend-cloud-run-service-account](https://github.com/f1betting/krakend-cloud-run-service-account) plugin. This is
-done with
-secrets of the action's repository.
+the [krakend-cloud-run-service-account](https://github.com/f1betting/krakend-cloud-run-service-account) plugin. 
+This is done with secrets of the action's repository.
 
 The input folder contains the custom configuration files and an example OpenAPI specification.
+
+**WARNING**: By default, gcloud build uses the ``.gitignore`` unless a ``.gcloudignore`` is added to the repository. It
+is essential to use a ``.gcloudignore`` if you wish to use the plugin due to it being a ``.so`` file, which gets ignored
+by the ``.gitignore`` in this repository.
 
 ### The secrets
 
@@ -31,6 +34,7 @@ jobs:
         uses: f1betting/OpenAPItoKrakenD@v2
         with:
           input-folder: input
+          environment: prod
 
   build:
     needs: [ convert ]
@@ -46,6 +50,7 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: krakend-config
+          path: output
 
       - name: Download krakend-cloud-run-service-account plugin
         uses: robinraju/release-downloader@v1.7
@@ -53,7 +58,7 @@ jobs:
           repository: "f1betting/krakend-cloud-run-service-account"
           latest: true
           fileName: "cloud-run-service-account.so"
-          out-file-path: "./config/plugins"
+          out-file-path: "./output/plugins"
 
       - name: Authenticate Google SDK
         uses: 'google-github-actions/auth@v1'
@@ -64,7 +69,7 @@ jobs:
         uses: 'google-github-actions/setup-gcloud@v1'
 
       - name: 'Build docker-image and submit to GCR'
-        run: 'gcloud builds submit --tag eu.gcr.io/${{secrets.GOOGLE_PROJECT_ID}}/${{secrets.GOOGLE_SERVICE_NAME}} . --timeout 3600'
+        run: 'gcloud builds submit --tag eu.gcr.io/${{secrets.GOOGLE_PROJECT_ID}}/${{secrets.GOOGLE_SERVICE_NAME}} ./output --timeout 3600'
 
   deploy:
     needs: [ convert, build ]
