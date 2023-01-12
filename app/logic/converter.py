@@ -425,6 +425,9 @@ class OpenAPIToKrakenD:
 
             if "security" in data:
                 self.logger.debug("Global security schemes found in OpenAPI")
+
+                # Disable pylint unnecessary-comprehension due to a false positive. The pylint suggestion does NOT work.
+                # pylint: disable=unnecessary-comprehension
                 global_security_schemes = [list(item.keys())[0] for item in [scheme for scheme in data["security"]]]
 
             if "components" in data and "securitySchemes" in data["components"]:
@@ -439,7 +442,9 @@ class OpenAPIToKrakenD:
                 for method in data["paths"][path]:
                     self.logger.info(f"Preparing conversion for {path}: {method}")
 
-                    headers = self.__get_headers(data["paths"][path][method], global_security_schemes, openapi_security_schemes)
+                    headers = self.__get_headers(data["paths"][path][method],
+                                                 global_security_schemes,
+                                                 openapi_security_schemes)
 
                     query_strings = self.__get_query_strings(data["paths"][path][method])
 
