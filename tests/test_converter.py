@@ -202,6 +202,39 @@ class TestConverter(unittest.TestCase):
         # Test if /users does not contain the Authorization header
         self.assertFalse("Authorization" in endpoints[0]["input_headers"])
 
+    def test_global_security_header_on_endpoint(self):
+        """
+        Test if /bet/{season}/{race} contains the Authorization header
+        Test if /users contains the Authorization header
+        """
+        converter = OpenAPIToKrakenD(logging_mode=logging.ERROR,
+                                     input_folder_path="tests/mock_data/global_security_scheme/",
+                                     output_folder_path="tests/output")
+        converter.convert()
+
+        with open("tests/output/config/templates/OPENAPI.tmpl", "r", encoding="utf-8") as template_file:
+            template = template_file.read()
+
+        # Remove templating
+        config_data = re.sub(r"^({{(.*?)}})", "", template, flags=re.M).strip()
+
+        # Split objects
+        # "(?<=}),\n" selects all the commas (",") after a closing curly bracket ("}") that prepend a newline ("\n")
+        # "^(?!\s)" matches all the spaces after the newline and removes them from the match
+        endpoints_data = re.split(r"(?<=}),\n^(?!\s)", config_data, flags=re.M)
+
+        endpoints = []
+
+        # Load JSON to array
+        for endpoint in endpoints_data:
+            endpoints.append(json.loads(endpoint))
+
+        # Test if /bet/{season}/{race} contains the Authorization header
+        self.assertTrue("Authorization" in endpoints[3]["input_headers"])
+
+        # Test if /users contains the Authorization header
+        self.assertTrue("Authorization" in endpoints[0]["input_headers"])
+
     def test_oauth2_security_header_on_endpoint(self):
         """
         Test if /bet/{season}/{race} contains the Authorization header
@@ -290,16 +323,19 @@ class TestConverter(unittest.TestCase):
 
     def test_duplicate_security_headers(self):
         """
-        Test if an InvalidOpenAPIError is being raised when two security schemes have the same header on the same
-        endpoint
+        Test if an "[ERROR]: Header 'Authorization' already exists" is being logged when two security schemes have the
+        same header on the same endpoint
         """
-        converter = OpenAPIToKrakenD(logging_mode=logging.ERROR,
+        converter = OpenAPIToKrakenD(logging_mode=logging.WARNING,
                                      input_folder_path="tests/mock_data/duplicate_security_headers/",
                                      output_folder_path="tests/output")
 
-        # Test if a folder with no JSON files raises a InvalidOpenAPIError
-        with self.assertRaises(InvalidOpenAPIError):
+        # Test if a duplicate security header logs with a warning
+        with self.assertLogs(converter.logger.get_logger(), logging.WARNING) as context_manager:
             converter.convert()
+
+        self.assertTrue(["[ERROR]: Header 'Authorization' already exists"
+                         in r for r in context_manager.output])
 
     def test_header_parameter_on_endpoint(self):
         """

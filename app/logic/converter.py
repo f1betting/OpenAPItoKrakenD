@@ -47,6 +47,8 @@ class OpenAPIToKrakenD:
 
         self.versioning: bool = not no_versioning
 
+        self.api_global_security: list = []
+
     def convert(self) -> OpenAPIToKrakenD:
         """
         Convert OpenAPI files to a flexible KrakenD configuration.
@@ -419,9 +421,17 @@ class OpenAPIToKrakenD:
             prefix = f'{{{{$prefix := "/{api_prefix}"}}}}\n\n'
 
             openapi_security_schemes = None
+            global_security_schemes = None
+
+            if "security" in data:
+                self.logger.debug("Global security schemes found in OpenAPI")
+
+                # Disable pylint unnecessary-comprehension due to a false positive. The pylint suggestion does NOT work.
+                # pylint: disable=unnecessary-comprehension
+                global_security_schemes = [list(item.keys())[0] for item in [scheme for scheme in data["security"]]]
 
             if "components" in data and "securitySchemes" in data["components"]:
-                self.logger.debug("Security schemes found in OpenAPI")
+                self.logger.debug("Security schemes found on endpoint")
                 openapi_security_schemes = data["components"]["securitySchemes"]
 
             # Loop over every path inside the OpenAPI spec
@@ -432,7 +442,10 @@ class OpenAPIToKrakenD:
                 for method in data["paths"][path]:
                     self.logger.info(f"Preparing conversion for {path}: {method}")
 
-                    headers = self.__get_headers(data["paths"][path][method], openapi_security_schemes)
+                    headers = self.__get_headers(data["paths"][path][method],
+                                                 global_security_schemes,
+                                                 openapi_security_schemes)
+
                     query_strings = self.__get_query_strings(data["paths"][path][method])
 
                     self.logger.info(f"Converting {path}: {method}")
@@ -467,15 +480,15 @@ class OpenAPIToKrakenD:
             self.logger.info(f"Writing {output_path}.tmpl")
             file.write(file_data)
 
-    def __get_headers(self, endpoint, security_schemes):
+    def __get_headers(self, endpoint, global_security_schemes, security_schemes):
         """
         Get the headers for the endpoint from the parameters and authorization methods
         """
         headers = []
 
-        if "security" in endpoint and endpoint["security"] is not None:
+        if ("security" in endpoint and endpoint["security"] is not None) or global_security_schemes:
             self.logger.debug("Adding security headers")
-            headers = self.__add_security_headers(endpoint, security_schemes)
+            headers = self.__add_security_headers(endpoint, global_security_schemes, security_schemes)
             self.logger.debug("Added security headers")
         else:
             self.logger.debug("No authorization header required")
@@ -508,15 +521,20 @@ class OpenAPIToKrakenD:
 
         return query_strings
 
-    def __add_security_headers(self, endpoint, security_schemes):
+    def __add_security_headers(self, endpoint, global_security_schemes, security_schemes):
         """
         Add the security headers
         """
         headers = []
+        schemes = []
 
         # Disable pylint unnecessary-comprehension due to a false positive. The pylint suggestion does NOT work.
         # pylint: disable=unnecessary-comprehension
-        schemes = [list(item.keys())[0] for item in [scheme for scheme in endpoint["security"]]]
+        if "security" in endpoint:
+            schemes = [list(item.keys())[0] for item in [scheme for scheme in endpoint["security"]]]
+
+        if global_security_schemes:
+            schemes.extend(global_security_schemes)
 
         for scheme in schemes:
             if scheme not in security_schemes:
@@ -525,7 +543,7 @@ class OpenAPIToKrakenD:
             self.logger.debug(f"Adding header for components.securitySchemes.{scheme}")
             header = self.__get_security_headers(security_schemes[scheme])
             if header in headers:
-                raise InvalidOpenAPIError(f"Header '{header}' already exists")
+                self.logger.warning(f"Header '{header}' already exists")
             if header is None:
                 raise InvalidOpenAPIError("Unsupported authorization method used")
 
