@@ -47,8 +47,6 @@ class OpenAPIToKrakenD:
 
         self.versioning: bool = not no_versioning
 
-        self.api_global_security: list = []
-
     def convert(self) -> OpenAPIToKrakenD:
         """
         Convert OpenAPI files to a flexible KrakenD configuration.
