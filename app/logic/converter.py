@@ -526,12 +526,12 @@ class OpenAPIToKrakenD:
         # Disable pylint unnecessary-comprehension due to a false positive. The pylint suggestion does NOT work.
         # pylint: disable=unnecessary-comprehension
         if "security" in endpoint:
-            [schemes.append(list(item.keys())[0]) for item in [scheme for scheme in endpoint["security"]]]
+            schemes.extend([list(item.keys())[0] for item in [scheme for scheme in endpoint["security"]]])
 
         # Disable pylint unnecessary-comprehension due to a false positive. The pylint suggestion does NOT work.
         # pylint: disable=unnecessary-comprehension
         if global_security_schemes:
-            [schemes.append(list(item.keys())[0]) for item in [scheme for scheme in global_security_schemes]]
+            schemes.extend([list(item.keys())[0] for item in [scheme for scheme in global_security_schemes]])
 
         for scheme in schemes:
             if scheme not in security_schemes:
