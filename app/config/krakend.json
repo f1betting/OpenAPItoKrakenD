@@ -27,21 +27,13 @@
         "Authorization"
       ],
       "max_age": "12h",
-      "allow_credentials": true,
-      "debug": true
-    },
-    "router": {
-      "logger_skip_paths": [
-        "/__health"
-      ],
-      "disable_access_log": true
+      "allow_credentials": true
     },
     "telemetry/logging": {
       "level": "INFO",
       "prefix": "[KRAKEND]",
-      "syslog": true,
-      "stdout": true,
-      "format": "logstash"
+      "syslog": false,
+      "stdout": true
     }
   }
 }
